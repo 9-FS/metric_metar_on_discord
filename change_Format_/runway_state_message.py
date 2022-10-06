@@ -118,7 +118,7 @@ def change_format_RSM(info):
 
             i+=1
         if bold==True:
-            info_new=f"*{info_new}*"
+            info_new=f"**{info_new}**"
         return "\n"+info_new
 
     if re.search("^R([0-3][0-9]|88)([LCR]|)/CLRD//$", info)!=None:

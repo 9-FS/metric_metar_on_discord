@@ -11,19 +11,19 @@ def change_Format_RMK(info_list, i, station, station_elev, date, RWY_DB):
         return ""           #String leer zurück
 
 
-    info_new=change_format_wind     (info_list[i], station, RWY_DB) #Wind
+    info_new=change_format_wind     (info_list[i], station, RWY_DB)         #Wind
     if info_new!=None:
         return info_new
 
-    info_new=change_format_temp_dew (info_list[i])                   #Temperatur und Taupunkt
+    info_new=change_format_temp_dew (info_list[i])                          #Temperatur und Taupunkt
     if info_new!=None:
         return info_new
 
-    info_new=change_format_QNH      (info_list[i])                  #QNH, als Zusatz in Einheit anderer schon gesehen (Bsp. RCTP)
+    info_new=change_format_QNH      (info_list[i])                          #QNH, als Zusatz in Einheit anderer schon gesehen (Bsp. RCTP)
     if info_new!=None:
         return info_new
 
-    info_new=change_Format_HGT      (info_list[i], station_elev)    #Höhe, Bsp Windänderungshöhe
+    info_new=change_Format_HGT      (info_list[i], station_elev)            #Höhe, Bsp Windänderungshöhe
     if info_new!=None:
         return info_new
 
@@ -31,11 +31,11 @@ def change_Format_RMK(info_list, i, station, station_elev, date, RWY_DB):
     ###if re.search("^[0-2][0-9][0-5][0-9]$", Info)!=None:
         ###return " "+Info
 
-    info_new=change_format_VV       (info_list[i])                  #Sicht vertikal
+    info_new=change_format_VV       (info_list[i])                          #Sicht vertikal
     if info_new!=None:
         return info_new
 
-    info_new=change_format_USA_codes(info_list[i], date)            #USA Wetterstationcodes
+    info_new=change_format_USA_codes(info_list[i], date, station, RWY_DB)   #USA Wetterstationcodes
     if info_new!=None:
         return info_new
 

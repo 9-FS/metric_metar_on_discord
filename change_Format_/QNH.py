@@ -1,22 +1,24 @@
 import re   #Regular Expressions
+from weather_minimums import WEATHER_MIN
+
 
 def change_format_QNH(info):
     #QNH
     if re.search("^Q[0-9][0-9][0-9][0-9]$", info)!=None:
         info_new=f"Q{int(info[1:5])/10:05.1f}kPa".replace(".", ",")
-        if int(info[1:5])*100<=95e3 or 105e3<=int(info[1:5])*100:   #Druck ungewöhnlich, schau wegen QNH-Skala und bei Tief Stürmen
+        if ("QNH_min" in WEATHER_MIN and int(info[1:5])*100<WEATHER_MIN["QNH_min"]) or ("QNH_max" in WEATHER_MIN and WEATHER_MIN["QNH_max"]<int(info[1:5])*100):    #Druck ungewöhnlich, wegen QNH-Skala und bei Tief Stürmen
             info_new=f"**{info_new}**"
         return " "+info_new
 
     if re.search("^A[0-9][0-9][0-9][0-9]$", info)!=None:
         info_new=f"A{int(info[1:5])/100*3386.3879597/1000:05.1f}kPa".replace(".", ",")
-        if int(info[1:5])/100*3386.3879597<=95e3 or 105e3<=int(info[1:5])/100*3386.3879597: #Druck ungewöhnlich, schau wegen QNH-Skala und bei Tief Stürmen
+        if ("QNH_min" in WEATHER_MIN and int(info[1:5])/100*3386.3879597<WEATHER_MIN["QNH_min"]) or ("QNH_max" in WEATHER_MIN and WEATHER_MIN["QNH_max"]<int(info[1:5])/100*3386.3879597):  #Druck ungewöhnlich, wegen QNH-Skala und bei Tief Stürmen
             info_new=f"**{info_new}**"
         return " "+info_new
 
     if re.search("^QNH[0-9][0-9][0-9][0-9]INS$", info)!=None:
         info_new=f"A{int(info[3:7])/100*3386.3879597/1000:05.1f}kPa".replace(".", ",")
-        if int(info[3:7])/100*3386.3879597<=95e3 or 105e3<=int(info[3:7])/100*3386.3879597: #Druck ungewöhnlich, schau wegen QNH-Skala und bei Tief Stürmen
+        if ("QNH_min" in WEATHER_MIN and int(info[3:7])/100*3386.3879597<WEATHER_MIN["QNH_min"]) or ("QNH_max" in WEATHER_MIN and WEATHER_MIN["QNH_max"]<int(info[3:7])/100*3386.3879597):  #Druck ungewöhnlich, wegen QNH-Skala und bei Tief Stürmen
             info_new=f"**{info_new}**"
         return " "+info_new
 

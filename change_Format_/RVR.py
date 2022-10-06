@@ -1,10 +1,12 @@
 import re   #Regular Expressions
 from KFS import KFSfstr
+from weather_minimums import WEATHER_MIN
 
 
 def change_format_RVR(info):
     if(   re.search("^R[0-3][0-9]([LCR]|)/([PM]|)[0-9][0-9][0-9][0-9]([UND]|)$", info)!=None
        or re.search("^R[0-3][0-9]([LCR]|)/([PM]|)[0-9][0-9][0-9][0-9]V[0-9][0-9][0-9][0-9]([UND]|)$", info)!=None):
+        bold=False
         slash_found=False
         RVR=""
         info_new=""
@@ -33,6 +35,8 @@ def change_format_RVR(info):
                         info_new+=f"{KFSfstr.notation_tech(RVR, 2)}m/"
                     else:
                         info_new+=f"{KFSfstr.notation_tech(RVR, 3)}m/"
+                    if "RVR" in WEATHER_MIN and int(RVR)<WEATHER_MIN["RVR"]:    #wenn RVR unter RVR min.:
+                        bold=True
                     RVR=""
                 info_new+=info[i]
             if i==len(info)-1:                                                  #wenn Durchgang letzter:
@@ -41,6 +45,10 @@ def change_format_RVR(info):
                         info_new+=f"{KFSfstr.notation_tech(RVR, 2)}m"
                     else:
                         info_new+=f"{KFSfstr.notation_tech(RVR, 3)}m"
+                    if "RVR" in WEATHER_MIN and int(RVR)<WEATHER_MIN["RVR"]:    #wenn RVR unter RVR min.:
+                        bold=True
+        if bold==True:
+            info_new=f"**{info_new}**"
         return " "+info_new
 
     if(   re.search("^R[0-3][0-9]([LCR]|)/([PM]|)[0-9][0-9][0-9][0-9]FT(/[UND]|)$", info)!=None
@@ -50,18 +58,22 @@ def change_format_RVR(info):
         info_new=""
 
         for i in range(len(info)):
-            if   slash_found==False and re.search("[0-9A-Z]", info[i])!=None:   #wenn noch kein Slash und Buchstabe oder Zahl:
-                info_new+=info[i]                                               #weiterleiten
-            elif slash_found==False and info[i]=="/":                           #wenn noch kein Slash und Slash gefunden:
-                slash_found=True                                                #gefunden
-                info_new+=info[i]                                               #weiterleiten
-            elif slash_found==True and re.search("[PM]", info[i])!=None:        #wenn Slash gefundenund Buchstabe P oder M:
-                info_new+=info[i]                                               #weiterleiten
-            elif slash_found==True and re.search("[0-9]", info[i])!=None:       #wenn Slash gefunden und Zahl:
-                RVR+=info[i]                                                    #RVR Teil
-            elif slash_found==True and re.search("[A-Z/]", info[i])!=None:      #wenn Slash gefunden und Buchstabe oder Slash
-                if 0<len(RVR):                                                  #wenn RVR im Buffer: konvertieren und weiterleiten
+            if   slash_found==False and re.search("[0-9A-Z]", info[i])!=None:       #wenn noch kein Slash und Buchstabe oder Zahl:
+                info_new+=info[i]                                                   #weiterleiten
+            elif slash_found==False and info[i]=="/":                               #wenn noch kein Slash und Slash gefunden:
+                slash_found=True                                                    #gefunden
+                info_new+=info[i]                                                   #weiterleiten
+            elif slash_found==True and re.search("[PM]", info[i])!=None:            #wenn Slash gefundenund Buchstabe P oder M:
+                info_new+=info[i]                                                   #weiterleiten
+            elif slash_found==True and re.search("[0-9]", info[i])!=None:           #wenn Slash gefunden und Zahl:
+                RVR+=info[i]                                                        #RVR Teil
+            elif slash_found==True and re.search("[A-Z/]", info[i])!=None:          #wenn Slash gefunden und Buchstabe oder Slash
+                if 0<len(RVR):                                                      #wenn RVR im Buffer: konvertieren und weiterleiten
                     info_new+=f"{KFSfstr.notation_tech(int(RVR)*0.3048, 2)}m"
+                    if "RVR" in WEATHER_MIN and int(RVR)*0.3048<WEATHER_MIN["RVR"]: #wenn RVR unter RVR min.:
+                        bold=True
                     RVR=""
                 info_new+=info[i]
+        if bold==True:
+            info_new=f"**{info_new}**"
         return " "+info_new.replace("FT", "")

@@ -1,14 +1,16 @@
 import datetime
-import re   #Regular Expressions
+import numpy as np  #für CWC, np-Funktionen wegen Dataframeseingabe
+import re           #Regular Expressions
 from KFS import KFSfstr
+from weather_minimums import WEATHER_MIN
 
 
-def change_format_USA_codes(info, date):
+def change_format_USA_codes(info, date, station, RWY_DB):
     #USA: Wetterbeginn oder Wetterende
     if re.search("^(([+-]|)([A-Z][A-Z]|)([A-Z][A-Z]|)([A-Z][A-Z]|)[BE]([0-9][0-9]|)[0-9][0-9])+$", info)!=None:
         info_new=""
-        time=""                                                                                                     #Information Uhrzeit
-        time_i=-1                                                                                                   #Uhrzeitbeginn Index
+        time=""     #Information Uhrzeit
+        time_i=-1   #Uhrzeitbeginn Index
 
 
         Infos=re.findall("(([+-]|)([A-Z][A-Z]|)([A-Z][A-Z]|)([A-Z][A-Z]|)[BE]([0-9][0-9]|)[0-9][0-9])", info)    #Informationsgruppen trennen
@@ -51,11 +53,32 @@ def change_format_USA_codes(info, date):
 
     #USA: Peak Wind
     if re.search("^[0-3][0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9]$", info)!=None:
+        bold=True
+        CWC=[]      #auf Pisten Seitenwindkomponenten [m/s]
+        info_new=""
+        
         if info[0:3]!="360":
-            info=f"{info[6:8]}:{info[8:10]}/{info[0:3]}°{int(info[3:5])*0.5144444:02.0f}m/s"
+            info_new=f"{info[6:8]}:{info[8:10]}/{info[0:3]}°{int(info[3:5])*0.5144444:02.0f}m/s"
         else:
-            info=f"{info[6:8]}:{info[8:10]}/000°{int(info[3:5])*0.5144444:02.0f}m/s"
-        return " "+info
+            info_new=f"{info[6:8]}:{info[8:10]}/000°{int(info[3:5])*0.5144444:02.0f}m/s"
+
+        RWY=RWY_DB[RWY_DB["airport_ident"]==station]                                                            #in Flughafen Pisten gesucht
+        if RWY.empty==False:                                                                                    #wenn Pisten gefunden:
+            CWC+=list((abs(np.sin(np.radians(int(info[0:3])-RWY["le_heading_degT"]))*int(info[3:5])*0.5144444)).dropna()) #sin(Richtungsdifferenz)*Windgeschwindigkeit, Betrag, Nans entfernen, konvertieren zu Liste
+        else:                                       #wenn keine Piste in Datenbank gefunden:
+            CWC.append(int(info[3:5])*0.5144444)    #direkten Seitenwind annehmen
+        for i in range(len(CWC)):
+            if CWC[i]<=WEATHER_MIN["CWC"]:  #wenn zumindest 1 Seitenwindkomponente unter Maximum:
+                bold=False                  #landbar
+                break
+
+        if WEATHER_MIN["wind"]<int(info[3:5])*0.5144444:    #wenn trotz landbarem Seitenwind Gesamtwind einfach zu stark:
+            bold=True
+
+        if bold==True:
+            info_new=f"**{info_new}**"
+        return " "+info_new
+
 
     #USA: Niederschlagswasseräquivalent
     if re.search("^P[0-9][0-9][0-9][0-9]$", info)!=None:
@@ -66,14 +89,20 @@ def change_format_USA_codes(info, date):
     if re.search("^[12][01][0-9][0-9][0-9]$", info)!=None:
         bold=False
         info_new=""
+        temp=""
+
         if   info[0]=="1":
             info_new+="TX6h/"
         elif info[0]=="2":
             info_new+="TN6h/"
         if info[1]=="1":      #wenn Vorzeichen negativ:
-            info_new+="-"
+            temp+="-"
+        temp+=f"{int(info[2:5])/10:.1f}"
+        info_new=f"{temp}°C".replace(".", ",")
+
+        if ("temp_min" in WEATHER_MIN and float(temp)<WEATHER_MIN["temp_min"]) or ("temp_max" in WEATHER_MIN and WEATHER_MIN["temp_max"]<float(temp)):  #wenn Temperatur außerhalb Grenzen, wegen Leistungstabellen und Vereisung
             bold=True
-        info_new+=f"{int(info[2:5])/10:.1f}°C".replace(".", ",")
+        
         if bold==True:
             info_new=f"**{info_new}**"
         return " "+info_new
@@ -87,18 +116,30 @@ def change_format_USA_codes(info, date):
 
     #USA Code 4: 86ks (24h) Temperatur max und min
     if re.search("^4[01][0-9][0-9][0-9][01][0-9][0-9][0-9]$", info)!=None:
-        bold=False
-        info_new="TX24h/"
+        temp="" #Temperatur, Hilfsvariabel
+        TN24h=""
+        TX24h=""
+
+        TX24h="TX24h/"
         if info[1]=="1":    #wenn Vorzeichen negativ:
-            info_new+="-"
-            bold=True
-        info_new+=f"{int(info[2:5])/10:04.1f}°C ".replace(".", ",")
-        info_new+="TN24h/"
+            temp+="-"
+        temp+=f"{int(info[2:5])/10:04.1f}"
+        TX24h+=f"{temp}°C".replace(".", ",")
+        
+        if ("temp_min" in WEATHER_MIN and float(temp)<WEATHER_MIN["temp_min"]) or ("temp_max" in WEATHER_MIN and WEATHER_MIN["temp_max"]<float(temp)):  #wenn Temperatur außerhalb Grenzen, wegen Leistungstabellen und Vereisung
+            TX24h=f"**{TX24h}**"
+
+        temp=""
+        TN24h="TN24h/"
         if info[5]=="1":    #wenn Vorzeichen negativ:
-            info_new+="-"
-        info_new+=f"{int(info[6:9])/10:04.1f}°C".replace(".", ",")
-        if bold==True:
-            info_new=f"**{info_new}**"
+            temp+="-"
+        temp+=f"{int(info[6:9])/10:04.1f}"
+        TN24h=f"{temp}°C".replace(".", ",")
+
+        if ("temp_min" in WEATHER_MIN and float(temp)<WEATHER_MIN["temp_min"]) or ("temp_max" in WEATHER_MIN and WEATHER_MIN["temp_max"]<float(temp)):  #wenn Temperatur außerhalb Grenzen, wegen Leistungstabellen und Vereisung
+            TN24h=f"**{TN24h}**"
+
+        info_new=f"{TX24h} {TN24h}"
         return " "+info_new
 
     #USA Code 5: 11ks (3h) Drucktendenz
@@ -127,6 +168,7 @@ def change_format_USA_codes(info, date):
     #USA Code 8/: Wolkenart
     if re.search("^8/[0-9][0-9/][0-9/]$", info)!=None:
         bold=False
+        
         info_new="CLOUDS/"
         if   info[2]=="0":
             info_new+="-/"              #nix
@@ -195,6 +237,9 @@ def change_format_USA_codes(info, date):
             info_new+="CC,CI,CS"        #Cirrocumulus oder Cirrus oder Cirrostratus
         elif info[4]=="/":
             info_new+="ABV-OVC"         #über OVC Wolken
+
+        if bold==True:
+            info_new=f"**{info_new}**"
         return " "+info_new
 
     #USA Code 98: Sonnenscheindauer

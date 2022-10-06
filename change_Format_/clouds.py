@@ -1,4 +1,5 @@
 import re   #Regular Expressions
+from weather_minimums import WEATHER_MIN
 
 
 def change_format_clouds(info, station_elev):
@@ -29,7 +30,7 @@ def change_format_clouds(info, station_elev):
 
         if 6<len(info) and info[6:8]=="CB":                             #wenn CB: markieren
             info_new=f"**{info_new}**"
-        elif re.search("BKN|OVC", info[0:3])!=None and HGT<1500*0.3048: #Ceil min. AGL 1.500ft (460m)
+        elif re.search("BKN|OVC", info[0:3])!=None and "ceiling" in WEATHER_MIN and HGT<WEATHER_MIN["ceiling"]: #Ceiling min.
             info_new=f"**{info_new}**"
 
         return " "+info_new

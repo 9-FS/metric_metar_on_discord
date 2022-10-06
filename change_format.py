@@ -18,61 +18,62 @@ def change_format(info_list, i, station, station_elev, date, RWY_DB, force_print
     if info_list[i]=="":    #wenn Info aktuell leer, kann vorkommen weil bei TAF Leerzeichen mehrere manchmal hintereinander
         return ""           #String leer zurück
 
+
     #Station einfach weiterleiten
 
-    info_new=change_format_time    (info_list[i], date, force_print)    #Zeitpunkt
+    info_new=change_format_time    (info_list[i], date, force_print)        #Zeitpunkt
     if info_new!=None:
         return info_new
 
-    info_new=change_format_wind    (info_list[i], station, RWY_DB)      #Wind
+    info_new=change_format_wind    (info_list[i], station, RWY_DB)          #Wind
     if info_new!=None:
         return info_new
 
-    info_new=change_format_vis     (info_list, i)                       #Sicht
+    info_new=change_format_vis     (info_list, i)                           #Sicht
     if info_new!=None:
         return info_new
 
-    info_new=change_format_RVR     (info_list[i])                       #RVR
+    info_new=change_format_RVR     (info_list[i])                           #RVR
     if info_new!=None:
         return info_new
 
-    info_new=change_format_weather (info_list[i])                       #Wetter, nur Wetter gefährlich markieren
+    info_new=change_format_weather (info_list, i)                           #Wetter, nur Wetter gefährlich markieren
     if info_new!=None:
         return info_new
 
-    info_new=change_format_clouds  (info_list[i], station_elev)         #Wolken, Wolkenhöhe in MSL [m]
+    info_new=change_format_clouds  (info_list[i], station_elev)             #Wolken, Wolkenhöhe in MSL [m]
     if info_new!=None:
         return info_new
 
-    info_new=change_format_VV      (info_list[i])                       #Sicht vertikal
+    info_new=change_format_VV      (info_list[i])                           #Sicht vertikal
     if info_new!=None:
         return info_new
 
-    info_new=change_format_temp_dew (info_list[i])                       #Temperatur und Taupunkt
+    info_new=change_format_temp_dew (info_list[i])                          #Temperatur und Taupunkt
     if info_new!=None:
         return info_new
 
-    info_new=change_format_QNH     (info_list[i])                       #QNH
+    info_new=change_format_QNH     (info_list[i])                           #QNH
     if info_new!=None:
         return info_new
 
-    info_new=change_format_RSM     (info_list[i])                       #Pistenzustand, Runway State Message
+    info_new=change_format_RSM     (info_list[i])                           #Pistenzustand, Runway State Message
     if info_new!=None:
         return info_new
 
-    info_new=change_format_change  (info_list, i, date)                 #TREND & TAF: Veränderung
+    info_new=change_format_change  (info_list, i, date)                     #TREND & TAF: Veränderung
     if info_new!=None:
         return info_new
 
-    info_new=change_format_validity(info_list[i], date)                 #TAF: Validitätszeitspanne
+    info_new=change_format_validity(info_list[i], date)                     #TAF: Validitätszeitspanne
     if info_new!=None:
         return info_new
 
-    info_new=change_format_TXTN    (info_list[i], date)                 #TAF: Tagestemperatur max und min
+    info_new=change_format_TXTN    (info_list[i], date)                     #TAF: Tagestemperatur max und min
     if info_new!=None:
         return info_new
 
-    info_new=change_format_USA_codes(info_list[i], date)                #USA Wetterstationcodes
+    info_new=change_format_USA_codes(info_list[i], date, station, RWY_DB)   #USA Wetterstationcodes
     if info_new!=None:
         return info_new
 
