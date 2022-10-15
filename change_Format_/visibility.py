@@ -1,5 +1,5 @@
 import re   #Regular Expressions
-from KFS import KFSfstr
+import KFS.fstr
 from weather_minimums import WEATHER_MIN
 
 
@@ -22,9 +22,9 @@ def change_format_vis(info_list, i):
             elif re.search("[A-Z]", info_list[i][j])!=None: #wenn Buchstabe:
                 if 0<len(vis):                              #wenn Vis im Puffer: konvertieren und weiterleiten
                     if 5e3<=int(vis):
-                        info_new+=f"{KFSfstr.notation_tech(int(vis), 1)}m/"
+                        info_new+=f"{KFS.fstr.notation_tech(int(vis), 1)}m/"
                     else:
-                        info_new+=f"{KFSfstr.notation_tech(int(vis), 2)}m/"
+                        info_new+=f"{KFS.fstr.notation_tech(int(vis), 2)}m/"
                         
                     if "vis" in WEATHER_MIN and int(vis)<WEATHER_MIN["vis"]:    #Vis min.
                         bold=True
@@ -34,9 +34,9 @@ def change_format_vis(info_list, i):
             if j==len(info_list[i])-1:                      #wenn Durchgang letzter:
                 if 0<len(vis):                              #wenn Vis im Buffer: konvertieren und weiterleiten
                     if 5e3<=int(vis):
-                        info_new+=f"{KFSfstr.notation_tech(int(vis), 1)}m"
+                        info_new+=f"{KFS.fstr.notation_tech(int(vis), 1)}m"
                     else:
-                        info_new+=f"{KFSfstr.notation_tech(int(vis), 2)}m"
+                        info_new+=f"{KFS.fstr.notation_tech(int(vis), 2)}m"
                         
                     if "vis" in WEATHER_MIN and int(vis)<WEATHER_MIN["vis"]:    #Vis min.
                         bold=True
@@ -58,7 +58,7 @@ def change_format_vis(info_list, i):
             
             elif re.search("[A-Z]", info_list[i][j])!=None: #wenn Buchstabe:
                 if 0<len(vis):                              #wenn Vis im Puffer: konvertieren und weiterleiten, Buchstaben ignorieren
-                    info_new+=f"{KFSfstr.notation_tech(int(vis)*1e3, 2)}m"
+                    info_new+=f"{KFS.fstr.notation_tech(int(vis)*1e3, 2)}m"
                     
                     if "vis" in WEATHER_MIN and int(vis)*1e3<WEATHER_MIN["vis"]:    #Vis min.
                         bold=True
@@ -80,7 +80,7 @@ def change_format_vis(info_list, i):
             
             elif re.search("[A-Z]", info_list[i][j])!=None: #wenn Buchstabe:
                 if 0<len(vis):                              #wenn Vis im Buffer: konvertieren und weiterleiten
-                    info_new+=f"{KFSfstr.notation_tech(int(vis)*1609.344, 2)}m"
+                    info_new+=f"{KFS.fstr.notation_tech(int(vis)*1609.344, 2)}m"
                     
                     if "USA_vis" in WEATHER_MIN and int(vis)*1609.344<WEATHER_MIN["USA_vis"]:   #USA Vis min.
                         bold=True
@@ -120,7 +120,7 @@ def change_format_vis(info_list, i):
             
             elif slash_found==True and re.search("[A-Z]", info_list[i][j])!=None:                           #wenn Slash gefunden und Buchstabe
                 if 0<len(vis1) and 0<len(vis2):                                                             #wenn Vis1 und Vis2 im Puffer: alles konvertieren und weiterleiten
-                    info_new+=f"{KFSfstr.notation_tech(int(vis1)/int(vis2)*1609.344, 2)}m"
+                    info_new+=f"{KFS.fstr.notation_tech(int(vis1)/int(vis2)*1609.344, 2)}m"
                     
                     if "USA_vis" in WEATHER_MIN and int(vis1)/int(vis2)*1609.344<WEATHER_MIN["USA_vis"]:    #USA Vis min.
                         bold=True

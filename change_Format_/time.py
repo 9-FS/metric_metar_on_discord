@@ -1,6 +1,6 @@
 import datetime as dt
 import re   #Regular Expressions
-from KFS import KFSfstr
+import KFS.fstr
 
 def change_format_time(info, date, force_print):
     if( re.search("^[0-9][0-9][0-9][0-9]/[0-9][0-9]/[0-9][0-9]$", info)!=None   #am Anfang Angabe vollständig entfernen
@@ -15,7 +15,7 @@ def change_format_time(info, date, force_print):
 
         if force_print==True:                                                   #wenn Ausgabe erzwungen:
             timespan_published=dt.datetime.now(dt.timezone.utc)-DT_publishion   #Zeitspanne veröffentlicht
-            info=f"{DT_publishion.strftime('%Y-%m-%dT%H:%M')} ({KFSfstr.notation_tech(timespan_published.total_seconds(), 2)}s ago)"
+            info=f"{DT_publishion.strftime('%Y-%m-%dT%H:%M')} ({KFS.fstr.notation_tech(timespan_published.total_seconds(), 2)}s ago)"
         else:                                                                   #wenn Abonnement:
             info=f"{DT_publishion.strftime('%Y-%m-%dT%H:%M')}"                  #ohne Zeitspanne veröffentlicht
 

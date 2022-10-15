@@ -4,7 +4,7 @@ import re
 import requests #http Zeugs
 from change_format                  import change_format                    #Informationsformat ändern
 from change_format_RMK              import change_Format_RMK                #in RMK-Sektion Informationsformat ändern
-from KFS                            import KFSlog
+import KFS.log
 from remove_unnecessary_whitespaces import remove_unnecessary_whitespaces   #Leerzeichen unnötig entfernen
 from split                          import split                            #Liste trennen an mehreren Seperatoren
 
@@ -19,17 +19,17 @@ def process_METAR(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT):
 
 
     #METAR herunterladen
-    KFSlog.write("Downloading METAR...")
+    KFS.log.write("Downloading METAR...")
     METAR_o=requests.get(f"http://tgftp.nws.noaa.gov/data/observations/metar/stations/{station}.TXT", timeout=DOWNLOAD_TIMEOUT) #METAR herunterladen
     
     if METAR_o.status_code==404:
-        KFSlog.write(f"\r{station} METAR could not be found online.")
+        KFS.log.write(f"\r{station} METAR could not be found online.")
         return "", ""   #METAR leer zurückgeben für gescheite Rückmeldung an Nutzer
 
     METAR_o=METAR_o.text
-    KFSlog.write("\rMETAR downloaded.")
+    KFS.log.write("\rMETAR downloaded.")
     METAR_o=remove_unnecessary_whitespaces(METAR_o) #löscht Leerzeichen doppelt und in jeder "Zeile" Leerzeichen führend und nachfolgend
-    KFSlog.write(METAR_o)
+    KFS.log.write(METAR_o)
     if METAR_o=="":
         return "", ""
     METAR_o_list=split(METAR_o, " ", "\n")  #METAR Originalformatierung als Liste, getrennt an " " und "\n"
@@ -49,10 +49,10 @@ def process_METAR(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT):
             METAR+="**EXPIRED** "                                                                                           #markieren
         break
     else:
-        KFSlog.write("METAR report time could not be parsed. Expiration status is uncertain.")
+        KFS.log.write("METAR report time could not be parsed. Expiration status is uncertain.")
 
     #METAR konvertieren
-    KFSlog.write("Converting METAR...")
+    KFS.log.write("Converting METAR...")
     i=0
     while i<len(METAR_o_list):   #alle Informationen im METAR nacheinander durch, while-Schleife weil man mit for keine Elemente während des Durchlaufens von METAR_o_List löschen kann
         if RMK==False:
@@ -69,7 +69,7 @@ def process_METAR(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT):
     
     METAR_o=METAR_o[17:]    #Datum vollständig am Anfang entfernen
     METAR=METAR.strip()     #Leerzeichen unnötig am Anfang und Ende entfernen, falls vorhanden
-    KFSlog.write("\rMETAR converted.")
-    KFSlog.write(METAR)
+    KFS.log.write("\rMETAR converted.")
+    KFS.log.write(METAR)
 
     return METAR_o, METAR

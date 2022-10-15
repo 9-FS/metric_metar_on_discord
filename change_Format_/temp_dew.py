@@ -1,5 +1,4 @@
 import re
-import tempfile   #Regular Expressions
 from weather_minimums import WEATHER_MIN
 
 

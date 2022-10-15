@@ -1,7 +1,7 @@
 import datetime
 import numpy as np  #für CWC, np-Funktionen wegen Dataframeseingabe
 import re           #Regular Expressions
-from KFS import KFSfstr
+import KFS.fstr
 from weather_minimums import WEATHER_MIN
 
 
@@ -82,7 +82,7 @@ def change_format_USA_codes(info, date, station, RWY_DB):
 
     #USA: Niederschlagswasseräquivalent
     if re.search("^P[0-9][0-9][0-9][0-9]$", info)!=None:
-        info=f"PWE/{KFSfstr.notation_tech(int(info[1:5])/100*0.0254, 2)}m"
+        info=f"PWE/{KFS.fstr.notation_tech(int(info[1:5])/100*0.0254, 2)}m"
         return " "+info
 
     #USA Code 1 und 2: 22ks (6h) Temperatur max und min
@@ -109,7 +109,7 @@ def change_format_USA_codes(info, date, station, RWY_DB):
 
     #USA Code 4/: Schneetiefe
     if re.search("^4/[0-9][0-9][0-9]$", info)!=None:
-        info_new=f"SNOW/{KFSfstr.notation_tech(int(info[2:5])*0.0254, 2)}m"
+        info_new=f"SNOW/{KFS.fstr.notation_tech(int(info[2:5])*0.0254, 2)}m"
         if 0<int(info[2:5]):
             info_new=f"**{info_new}**"
         return " "+info_new
@@ -157,12 +157,12 @@ def change_format_USA_codes(info, date, station, RWY_DB):
 
     #USA Code 6: in 11ks (3h) oder 22ks (6h) Niederschlagsmenge
     if re.search("^6[0-9][0-9][0-9][0-9]$", info)!=None:
-        info=f"PCPN(3h,6h)/{KFSfstr.notation_tech(int(info[1:5])/100*0.0254, 2)}m"
+        info=f"PCPN(3h,6h)/{KFS.fstr.notation_tech(int(info[1:5])/100*0.0254, 2)}m"
         return " "+info
 
     #USA Code 7: in 86ks (24h) Niederschlagsmenge
     if re.search("^7[0-9][0-9][0-9][0-9]$", info)!=None:
-        info=f"PCPN24h/{KFSfstr.notation_tech(int(info[1:5])/100*0.0254, 2)}m"
+        info=f"PCPN24h/{KFS.fstr.notation_tech(int(info[1:5])/100*0.0254, 2)}m"
         return " "+info
 
     #USA Code 8/: Wolkenart
@@ -244,17 +244,17 @@ def change_format_USA_codes(info, date, station, RWY_DB):
 
     #USA Code 98: Sonnenscheindauer
     if re.search("^98[0-9][0-9][0-9]$", info)!=None:
-        info=f"SUN/{KFSfstr.notation_tech(int(info[2:5])*60, 2)}s"
+        info=f"SUN/{KFS.fstr.notation_tech(int(info[2:5])*60, 2)}s"
         return " "+info
 
     #USA Code 931: in 22ks (6h) Schneemenge
     if re.search("^931[0-9][0-9][0-9]$", info)!=None:
-        info_new=f"SNOW6h/{KFSfstr.notation_tech(int(info[3:6])/10*0.0254, 2)}m"
+        info_new=f"SNOW6h/{KFS.fstr.notation_tech(int(info[3:6])/10*0.0254, 2)}m"
         if 0<int(info[3:6]):
             info_new=f"**{info_new}**"
         return " "+info_new
 
     #USA Code 933: Schneeflüssigkeitsäquivalent
     if re.search("^933[0-9][0-9][0-9]$", info)!=None:
-        info=f"SWE/{KFSfstr.notation_tech(int(info[3:6])/10*0.0254, 2)}m"
+        info=f"SWE/{KFS.fstr.notation_tech(int(info[3:6])/10*0.0254, 2)}m"
         return " "+info

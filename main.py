@@ -1,20 +1,19 @@
-from email import message
 import discord                          #Discord
-from discord.ext import tasks           #Discord Event Scheduler
+import discord.ext.tasks                #Discord Event Scheduler
 import datetime as dt                   #für Zeitpunkt aktuell
+import KFS.log                          #Debug-KFS.log statt print
 import pandas as pd                     #Dataframes
 import re                               #Regular Expressions, für Formatsuch
 import requests                         #HTTP Zeuch Exceptions
 from airport_info  import airport_info  #Flughafeninformationsbefehl
 from init_DB       import init_DB       #Datenbanken herunterladen oder aus Datei laden
-from KFS           import KFSlog           #Debug-KFSlog statt print
 from process_METAR import process_METAR #METAR herunterladen und konvertieren
 from process_TAF   import process_TAF   #TAF herunterladen und konvertieren
 
 
 #behalten über Laufzeit ganze
 airport_DB=pd.DataFrame()                                                   #Flughafendatenbank
-client=discord.Client()                                                     #Discord-Client
+client=None                                                                 #Discord-Client
 country_DB=pd.DataFrame()                                                   #Länderdatenbank für Ländernamen
 DT_DB_last_updated=dt.datetime.now(dt.timezone.utc)                         #Datenbanken zuletzt aktualisiert Zeitpunkt
 discord_bot_token=""                                                        #Bot-Token
@@ -35,8 +34,12 @@ TAF_update_finished=False                                                   #hat
 terminate=False                                                             #Programm schließen?
 
 
-@KFSlog.timeit
-def main():
+#@KFS.log.timeit   does not work with async functions
+async def main():
+    intents=discord.Intents.default()   #standard permissions with message contents in addition
+    intents.message_content=True
+    client=discord.Client(intents=intents)
+
     @client.event
     async def on_ready():
         global airport_DB
@@ -48,7 +51,7 @@ def main():
         global RWY_DB
 
 
-        KFSlog.write("--------------------------------------------------")
+        KFS.log.write("--------------------------------------------------")
         DT_now=dt.datetime.now(dt.timezone.utc)
         
         #Datenbanken initialisieren
@@ -59,7 +62,7 @@ def main():
         RWY_DB      =init_DB("Runway",    RWY_DB,       DT_now)
         DT_DB_last_updated=DT_now   #Datenbanken jetzt zuletzt aktualisiert
 
-        KFSlog.write("Discord client started.")
+        KFS.log.write("Discord client started.")
         await client.get_channel(discord_channel_ID).send("Discord client started.")
         return
 
@@ -89,13 +92,13 @@ def main():
             return
 
 
-        KFSlog.write("--------------------------------------------------")
+        KFS.log.write("--------------------------------------------------")
 
 
         #Kontrollbefehle ausführen
         """if str(message.author)==discord_username:   #wenn Nutzer eigener: Kontrollbefehle ausführen
             if message.lower()=="stop": #wenn Stoppbefehl
-                KFSlog.write("Executing stop command...")
+                KFS.log.write("Executing stop command...")
                 await message.channel.send('「Executing stop command.」\n')
                 #await client.close()    #Client schließen, Laden runterfahren
                 #TODO"""
@@ -106,23 +109,23 @@ def main():
         or (re.search("^[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9] TAF$",  message.content.upper())!=None)   #TAF erwünscht
         or (re.search("^[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9] INFO$", message.content.upper())!=None)): #nur Info erwünscht
             station=message.content[0:4].upper()    #Station ist Nachrichtanfang
-            KFSlog.write(f"Station: {station}")
+            KFS.log.write(f"Station: {station}")
 
             if re.search("^[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9] TAF$",  message.content.upper())!=None:   #wenn "ICAO-Code TAF":
                 append_TAF=True     #TAF erwünscht
-                KFSlog.write("TAF was requested.")
+                KFS.log.write("TAF was requested.")
 
         else:                                           #wenn Nachricht letzte nicht im Format "ICAO-Code" oder "ICAO-Code TAF"
-            KFSlog.write(f"Last message \"{message.content}\" is no ICAO format.")     #kein ICAO-Format, ignorieren
+            KFS.log.write(f"Last message \"{message.content}\" is no ICAO format.")     #kein ICAO-Format, ignorieren
             force_print=True                                                        #standardmäßig drucken zwingen
             return
 
         #Station_Name und Station_Elev
-        KFSlog.write(f"Looking for {station} in airport database...")
+        KFS.log.write(f"Looking for {station} in airport database...")
         airport=airport_DB[airport_DB["ident"]==station]                                #Flughafen gesucht
         airport=airport.reset_index(drop=True)
         if airport.empty==False:                                                        #wenn Flughafen gefunden:
-            KFSlog.write(f"\r{station} found in airport database.")
+            KFS.log.write(f"\r{station} found in airport database.")
 
             if pd.isna(airport.at[0, "elevation_ft"])==False:                           #wenn Wert gegeben:
                 station_elev=round(airport.at[0, "elevation_ft"]*0.3048)                #Höhe eintragen [m]
@@ -131,13 +134,13 @@ def main():
             if country.empty==False:                                                    #wenn Flughafenland gefunden:
                 station_name=f"{country.at[0, 'name']}, {airport.at[0, 'name']}"        #Land, Name eintragen
             else:                                                                       #wenn Flughafenland nicht gefunden:
-                KFSlog.write(f"Country of country code \"{airport.at[0, 'iso_country']}\" not found.")
+                KFS.log.write(f"Country of country code \"{airport.at[0, 'iso_country']}\" not found.")
                 station_name=f"{airport.at[0, 'iso_country']}, {airport.at[0, 'name']}" #Landcode, Name eintragen
-            KFSlog.write(f"Name: \"{station_name}\"")
+            KFS.log.write(f"Name: \"{station_name}\"")
             if station_elev!=None:
-                KFSlog.write(" | "+f"Elev={station_elev:,.0f}m".replace(",", "."), append_to_line_current=True)
+                KFS.log.write(" | "+f"Elev={station_elev:,.0f}m".replace(",", "."), append_to_line_current=True)
         else:                                                                   #wenn Flughafen nicht gefunden:
-            KFSlog.write(f"\r{station} not found in airport database.")
+            KFS.log.write(f"\r{station} not found in airport database.")
 
         #Info-Befehl
         if re.search("^[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9] INFO$", message.content.upper())!=None: #wenn Info-Befehl:
@@ -150,11 +153,11 @@ def main():
         try:
             METAR_o, METAR=process_METAR(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT)
         except requests.ConnectionError:    #wenn nicht erfolgreich: abbrechen
-            KFSlog.write("\rDownloading METAR failed.")
+            KFS.log.write("\rDownloading METAR failed.")
             force_print=True                #standardmäßig drucken zwingen
             return
         except requests.ReadTimeout:        #wenn nicht erfolgreich: abbrechen
-            KFSlog.write(f"\rDownloading METAR timed out after {DOWNLOAD_TIMEOUT}s.")
+            KFS.log.write(f"\rDownloading METAR timed out after {DOWNLOAD_TIMEOUT}s.")
             force_print=True                #standardmäßig drucken zwingen
             return
 
@@ -162,12 +165,12 @@ def main():
             try:
                 TAF_o, TAF=process_TAF(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT)
             except requests.ConnectionError:    #wenn nicht erfolgreich: TAF nicht drucken
-                KFSlog.write("\rDownloading TAF failed. Continuing without TAF...")
+                KFS.log.write("\rDownloading TAF failed. Continuing without TAF...")
                 append_TAF=False
                 TAF_o=""
                 TAF=""
             except requests.ReadTimeout:    #wenn nicht erfolgreich: TAF nicht drucken
-                KFSlog.write(f"\rDownloading TAF timed out after {DOWNLOAD_TIMEOUT}s. Continuing without TAF...")
+                KFS.log.write(f"\rDownloading TAF timed out after {DOWNLOAD_TIMEOUT}s. Continuing without TAF...")
                 append_TAF=False
                 TAF_o=""
                 TAF=""
@@ -183,65 +186,65 @@ def main():
         
         elif append_TAF==False:         #wenn kein drucken erzwingen: Abo; wenn TAF unerwünscht: TAF nicht berücksichtigen
             if METAR_o_last==METAR_o:   #wenn METAR original mit letztem übereinstimmen und drucken nicht zwingen: Abo, nichts drucken
-                KFSlog.write("Original METAR has not been changed. Not sending anything.")
+                KFS.log.write("Original METAR has not been changed. Not sending anything.")
                 force_print=True        #standardmäßig aber drucken zwingen
                 return
             elif METAR_o_last!=METAR_o and METAR_update_finished==False:    #wenn METAR original neu anders, noch nicht gewartet: Abo, 1 Runde warten damit Quellwebseite mit Aktualisierung garantiert fertig
-                KFSlog.write("Original METAR has changed, but update process may not have been finished yet. Not sending anything.")
+                KFS.log.write("Original METAR has changed, but update process may not have been finished yet. Not sending anything.")
                 METAR_update_finished=True   
                 force_print=True                                            #standardmäßig aber drucken zwingen
                 return
             elif METAR_o_last!=METAR_o and METAR_update_finished==True:     #wenn METAR original neu anders, schon gewartet: Abo, 1 Runde gewartet und jetzt METAR aber mal senden
-                KFSlog.write("Original METAR has changed and update process should have been finished.")
+                KFS.log.write("Original METAR has changed and update process should have been finished.")
                 METAR_o_last=METAR_o                                        #METAR original aktualisieren
                 METAR_update_finished=False                                 #schon gewartet zurücksetzen
         
         elif append_TAF==True:          #Abo; wenn TAF abonniert: TAF auch berücksichtigen
             if METAR_o_last==METAR_o and TAF_o_last==TAF_o:                 #wenn METAR original und TAF original mit letztem übereinstimmen: Abo, nichts drucken
-                KFSlog.write("Original METAR and TAF have not been changed. Not sending anything.")
+                KFS.log.write("Original METAR and TAF have not been changed. Not sending anything.")
                 force_print=True                                            #standardmäßig aber drucken zwingen
                 return
             elif(METAR_o_last!=METAR_o and TAF_o_last!=TAF_o
                  and METAR_update_finished==False and TAF_update_finished==False):#wenn METAR original neu und TAF original neu anders, noch nicht gewartet: Abo, 1 Runde warten damit Quellwebseite mit Aktualisierung garantiert fertig
-                KFSlog.write("Original METAR and TAF have changed, but update process may not have been finished yet. Not sending anything.")
+                KFS.log.write("Original METAR and TAF have changed, but update process may not have been finished yet. Not sending anything.")
                 METAR_update_finished=True
                 TAF_update_finished=True
                 force_print=True                                            #standardmäßig aber drucken zwingen
                 return
             elif METAR_o_last!=METAR_o and METAR_update_finished==False:    #wenn METAR original neu anders, noch nicht gewartet: Abo, 1 Runde warten damit Quellwebseite mit Aktualisierung garantiert fertig
-                KFSlog.write("Original METAR has changed, but update process may not have been finished yet. Not sending anything.")
+                KFS.log.write("Original METAR has changed, but update process may not have been finished yet. Not sending anything.")
                 METAR_update_finished=True
                 force_print=True                                            #standardmäßig aber drucken zwingen
                 return
             elif TAF_o_last!=TAF_o and TAF_update_finished==False:          #wenn TAF original neu anders, noch nicht gewartet: Abo, 1 Runde warten damit Quellwebseite mit Aktualisierung garantiert fertig
-                KFSlog.write("Original TAF has changed, but update process may not have been finished yet. Not sending anything.")
+                KFS.log.write("Original TAF has changed, but update process may not have been finished yet. Not sending anything.")
                 TAF_update_finished=True
                 force_print=True                                            #standardmäßig aber drucken zwingen
                 return
             elif(METAR_o_last!=METAR_o and TAF_o_last!=TAF_o
                  and METAR_update_finished==True and TAF_update_finished==True):    #wenn METAR original neu und TAF original neu anders, schon gewartet: Abo, 1 Runde gewartet und jetzt METAR und TAF aber mal senden
-                KFSlog.write("Original METAR and TAF have changed and update process should have been finished.")
+                KFS.log.write("Original METAR and TAF have changed and update process should have been finished.")
                 METAR_o_last=METAR_o                                        #METAR original aktualisieren
                 TAF_o_last=TAF_o                                            #TAF orginal aktualisieren
                 METAR_update_finished=False                                 #schon gewartet zurücksetzen
                 TAF_update_finished=False
             elif METAR_o_last!=METAR_o and METAR_update_finished==True:     #wenn METAR original neu anders, schon gewartet: Abo, 1 Runde gewartet und jetzt METAR aber mal senden
-                KFSlog.write("Original METAR has changed and update process should have been finished.")
+                KFS.log.write("Original METAR has changed and update process should have been finished.")
                 METAR_o_last=METAR_o                                        #METAR original aktualisieren
                 METAR_update_finished=False                                 #schon gewartet zurücksetzen
                 append_TAF=False                                            #METAR aktualisieren, aber TAF wahrscheinlich nicht, wegen Abo nur METAR schicken
             elif TAF_o_last!=TAF_o and TAF_update_finished==True:           #wenn TAF original neu anders, schon gewartet: Abo, 1 Runde gewartet und jetzt METAR und TAF aber mal senden
-                KFSlog.write("Original TAF has changed and update process should have been finished.")
+                KFS.log.write("Original TAF has changed and update process should have been finished.")
                 TAF_o_last=TAF_o                                            #TAF orginal aktualisieren
                 TAF_update_finished=False                                   #schon gewartet zurücksetzen
 
         #Nachrichten schicken
         if append_TAF==False:
-            KFSlog.write("Sending METAR, original METAR, and elevation...")
+            KFS.log.write("Sending METAR, original METAR, and elevation...")
         elif append_TAF==True and TAF_o!=f"{station} TAF could not be found.":
-            KFSlog.write("Sending METAR, TAF, original METAR, original TAF, and elevation...")
+            KFS.log.write("Sending METAR, TAF, original METAR, original TAF, and elevation...")
         elif append_TAF==True and TAF_o==f"{station} TAF could not be found.":
-            KFSlog.write("Sending METAR, original METAR, error message, and elevation...")
+            KFS.log.write("Sending METAR, original METAR, error message, and elevation...")
 
         if station_name!="":                                        #wenn Flughafenname vorhanden:
             message_send+=f"{station_name}\n----------\n"           #Flughafenname schicken
@@ -272,20 +275,20 @@ def main():
         try:
             await message.channel.send(message_send)    #Nachricht an Discord abschicken
         except discord.errors.DiscordServerError:
-            KFSlog.write("Sending message to discord failed.")
+            KFS.log.write("Sending message to discord failed.")
         else:
             if append_TAF==False:
-                KFSlog.write("\rMETAR, original METAR, and elevation sent.")
+                KFS.log.write("\rMETAR, original METAR, and elevation sent.")
             elif append_TAF==True and TAF_o!="":
-                KFSlog.write("\rMETAR, TAF, original METAR, original TAF, and elevation sent.")
+                KFS.log.write("\rMETAR, TAF, original METAR, original TAF, and elevation sent.")
             elif append_TAF==True and TAF_o=="":
-                KFSlog.write("\rMETAR, original METAR, error message, and elevation sent.")
+                KFS.log.write("\rMETAR, original METAR, error message, and elevation sent.")
 
         force_print=True    #bei nächstem Durchlauf wieder standardmäßig drucken erzwingen
         return
 
 
-    @tasks.loop(seconds=100)    #alle 100s auf Updates schauen
+    @discord.ext.tasks.loop(seconds=100)    #alle 100s auf Updates schauen
     async def METAR_updated():
         global airport_DB
         global country_DB
@@ -319,7 +322,8 @@ def main():
     #Bot-Token initialisieren, nicht hardgecoded damit er nicht im Quelltext auf Github steht
     with open("discord_bot_token.txt", "rt") as discord_bot_token_file:
         discord_bot_token=discord_bot_token_file.read()
-    client.run(discord_bot_token)
+    async with client:
+        await client.start(discord_bot_token)
 
 
 # METAR aktuell

@@ -1,5 +1,5 @@
 import re   #Regular Expressions
-from KFS import KFSmath
+import KFS.math
 
 
 def change_Format_HGT(info, station_elev):
@@ -15,7 +15,7 @@ def change_Format_HGT(info, station_elev):
                 HGT+=info[i]                          #HGT Teil
             elif re.search("[A-Z]", info[i])!=None:   #wenn Buchstabe:
                 if 0<len(HGT):                        #wenn HGT im Buffer: konvertieren und weiterleiten
-                    info_new+=f"{KFSmath.round_sig(int(HGT)*0.3048, 2)}m"
+                    info_new+=f"{KFS.math.round_sig(int(HGT)*0.3048, 2)}m"
                     HGT=""
                 info_new+=info[i]
         return " "+info_new.replace("FT", "")

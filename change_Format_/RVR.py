@@ -1,5 +1,5 @@
 import re   #Regular Expressions
-from KFS import KFSfstr
+import KFS.fstr
 from weather_minimums import WEATHER_MIN
 
 
@@ -24,17 +24,17 @@ def change_format_RVR(info):
             elif slash_found==True and info[i]=="V":                            #wenn Slash gefunden und Buchstabe V
                 if 0<len(RVR):                                                  #wenn RVR im Buffer: konvertieren und weiterleiten
                     if 1e3<=int(RVR):
-                        info_new+=f"{KFSfstr.notation_tech(RVR, 2)}m"
+                        info_new+=f"{KFS.fstr.notation_tech(RVR, 2)}m"
                     else:
-                        info_new+=f"{KFSfstr.notation_tech(RVR, 3)}m"
+                        info_new+=f"{KFS.fstr.notation_tech(RVR, 3)}m"
                     RVR=""
                 info_new+=info[i]
             elif slash_found==True and re.search("[UND]", info[i])!=None:       #wenn Slash gefunden und Buchstabe U, N, D
                 if 0<len(RVR):                                                  #wenn RVR im Buffer: konvertieren und weiterleiten
                     if 1e3<=int(RVR):
-                        info_new+=f"{KFSfstr.notation_tech(RVR, 2)}m/"
+                        info_new+=f"{KFS.fstr.notation_tech(RVR, 2)}m/"
                     else:
-                        info_new+=f"{KFSfstr.notation_tech(RVR, 3)}m/"
+                        info_new+=f"{KFS.fstr.notation_tech(RVR, 3)}m/"
                     if "RVR" in WEATHER_MIN and int(RVR)<WEATHER_MIN["RVR"]:    #wenn RVR unter RVR min.:
                         bold=True
                     RVR=""
@@ -42,9 +42,9 @@ def change_format_RVR(info):
             if i==len(info)-1:                                                  #wenn Durchgang letzter:
                 if 0<len(RVR):                                                  #wenn RVR im Buffer: konvertieren und weiterleiten
                     if 1e3<=int(RVR):
-                        info_new+=f"{KFSfstr.notation_tech(RVR, 2)}m"
+                        info_new+=f"{KFS.fstr.notation_tech(RVR, 2)}m"
                     else:
-                        info_new+=f"{KFSfstr.notation_tech(RVR, 3)}m"
+                        info_new+=f"{KFS.fstr.notation_tech(RVR, 3)}m"
                     if "RVR" in WEATHER_MIN and int(RVR)<WEATHER_MIN["RVR"]:    #wenn RVR unter RVR min.:
                         bold=True
         if bold==True:
@@ -69,7 +69,7 @@ def change_format_RVR(info):
                 RVR+=info[i]                                                        #RVR Teil
             elif slash_found==True and re.search("[A-Z/]", info[i])!=None:          #wenn Slash gefunden und Buchstabe oder Slash
                 if 0<len(RVR):                                                      #wenn RVR im Buffer: konvertieren und weiterleiten
-                    info_new+=f"{KFSfstr.notation_tech(int(RVR)*0.3048, 2)}m"
+                    info_new+=f"{KFS.fstr.notation_tech(int(RVR)*0.3048, 2)}m"
                     if "RVR" in WEATHER_MIN and int(RVR)*0.3048<WEATHER_MIN["RVR"]: #wenn RVR unter RVR min.:
                         bold=True
                     RVR=""

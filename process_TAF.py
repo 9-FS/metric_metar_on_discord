@@ -3,7 +3,7 @@ import re
 import requests #http Zeugs
 from change_format                  import change_format                    #Informationsformat ändern
 from change_format_RMK              import change_Format_RMK                #in RMK-Sektion Informationsformat ändern
-from KFS                            import KFSlog
+import KFS.log
 from remove_unnecessary_whitespaces import remove_unnecessary_whitespaces   #Leerzeichen unnötig entfernen
 from split                          import split                            #Liste trennen an mehreren Seperatoren
 
@@ -18,17 +18,17 @@ def process_TAF(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT):
 
 
     #TAF herunterladen
-    KFSlog.write("Downloading TAF...")
+    KFS.log.write("Downloading TAF...")
     TAF_o=requests.get(f"http://tgftp.nws.noaa.gov/data/forecasts/taf/stations/{station}.TXT", timeout=DOWNLOAD_TIMEOUT)    #TAF herunterladen
     
     if TAF_o.status_code==404:
-        KFSlog.write(f"\r{station} TAF could not be found online.")
+        KFS.log.write(f"\r{station} TAF could not be found online.")
         return "", ""   #TAF leer zurückgeben für gescheite Rückmeldung an Nutzer
 
     TAF_o=TAF_o.text
-    KFSlog.write("\rTAF downloaded.")
+    KFS.log.write("\rTAF downloaded.")
     TAF_o=remove_unnecessary_whitespaces(TAF_o) #löscht Leerzeichen doppelt und in jeder "Zeile" Leerzeichen führend und nachfolgend
-    KFSlog.write(TAF_o)
+    KFS.log.write(TAF_o)
     if TAF_o=="":
         return "", ""
     TAF_o_list=split(TAF_o, " ", "\n")  #TAF Originalformatierung als Liste, getrennt an " " und "\n"
@@ -49,10 +49,10 @@ def process_TAF(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT):
             TAF+="**EXPIRED** "                                                                                     #markieren
         break
     else:
-        KFSlog.write("TAF report time could not be parsed. Expiration status is uncertain.")
+        KFS.log.write("TAF report time could not be parsed. Expiration status is uncertain.")
 
     #TAF Konvertieren
-    KFSlog.write("Converting TAF...")
+    KFS.log.write("Converting TAF...")
     i=0
     while i<len(TAF_o_list): #alle Informationen im TAF nacheinander durch, while-Schleife weil man mit for keine Elemente während des Durchlaufens von TAF_o_List löschen kann
         if RMK==False:
@@ -69,7 +69,7 @@ def process_TAF(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT):
     
     TAF_o=TAF_o[17:]    #Datum vollständig am Anfang entfernen
     TAF=TAF.strip()     #Leerzeichen unnötig am Anfang und Ende entfernen, falls vorhanden
-    KFSlog.write("\rTAF converted.")
-    KFSlog.write(TAF)
+    KFS.log.write("\rTAF converted.")
+    KFS.log.write(TAF)
 
     return TAF_o, TAF

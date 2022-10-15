@@ -1,7 +1,6 @@
-import concurrent.futures
 import pandas as pd     #Dataframes
-from KFS import KFSfstr #Notation technisch
-from KFS import KFSlog  #KFSlog
+import KFS.fstr         #Notation technisch
+import KFS.log
 
 
 async def airport_info(station, station_name, station_elev, frequency_DB, navaid_DB, RWY_DB, message):
@@ -15,12 +14,12 @@ async def airport_info(station, station_name, station_elev, frequency_DB, navaid
     
 
     if station_name=="":                                                #wenn Station in Datenbank nicht gefunden:
-        KFSlog.write("Station could not be found in airport database.")
+        KFS.log.write("Station could not be found in airport database.")
         await message.channel.send("Station could not be found in airport database.")
         
 
     #Pisteninformationen zusammenstellen
-    KFSlog.write("Generating runway information...")
+    KFS.log.write("Generating runway information...")
     for i in RWY.index:
         RWY_info_i=0    #Infoindex, [0]: Pisten offen, [1]: Pisten geschlossen
 
@@ -32,9 +31,9 @@ async def airport_info(station, station_name, station_elev, frequency_DB, navaid
            and pd.isna(RWY["le_displaced_threshold_ft"][i])==True and pd.isna(RWY["he_displaced_threshold_ft"][i])==True):  #und keine Pistenschwelle versetzt:
             RWY_info[RWY_info_i]+=f"{RWY['le_ident'][i].upper()}/{RWY['he_ident'][i].upper()}"                              #beiden Pisten in 1 Eintrag
             if pd.isna(RWY["length_ft"][i])==False:
-                RWY_info[RWY_info_i]+=f": {KFSfstr.notation_tech(int(RWY['length_ft'][i])*0.3048, 2)}m"    #Pistenlänge
+                RWY_info[RWY_info_i]+=f": {KFS.fstr.notation_tech(int(RWY['length_ft'][i])*0.3048, 2)}m"    #Pistenlänge
             if pd.isna(RWY["width_ft"][i])==False:
-                RWY_info[RWY_info_i]+=f" • {KFSfstr.notation_tech(int(RWY['width_ft'][i])*0.3048, 2)}m"    #Pistenbreite
+                RWY_info[RWY_info_i]+=f" • {KFS.fstr.notation_tech(int(RWY['width_ft'][i])*0.3048, 2)}m"    #Pistenbreite
             if pd.isna(RWY["surface"][i])==False:
                 RWY_info[RWY_info_i]+=f", {RWY['surface'][i].upper()}"                      #Pistenoberfläche
             if pd.isna(RWY["lighted"][i])==False and RWY["lighted"][i]==0:                  #wenn nicht beleuchtet:
@@ -46,11 +45,11 @@ async def airport_info(station, station_name, station_elev, frequency_DB, navaid
             else:
                 continue
             if pd.isna(RWY["length_ft"][i])==False:
-                RWY_info[RWY_info_i]+=f": {KFSfstr.notation_tech(int(RWY['length_ft'][i])*0.3048, 2)}m"  #Pistenlänge
+                RWY_info[RWY_info_i]+=f": {KFS.fstr.notation_tech(int(RWY['length_ft'][i])*0.3048, 2)}m"  #Pistenlänge
             if pd.isna(RWY["le_displaced_threshold_ft"][i])==False:                                                                     #wenn Schwelle versetzt vorhanden:
-                RWY_info[RWY_info_i]+=f" ({KFSfstr.notation_tech((int(RWY['length_ft'][i])-int(RWY['le_displaced_threshold_ft'][i]))*0.3048, 2)}m)"  #LDA
+                RWY_info[RWY_info_i]+=f" ({KFS.fstr.notation_tech((int(RWY['length_ft'][i])-int(RWY['le_displaced_threshold_ft'][i]))*0.3048, 2)}m)"  #LDA
             if pd.isna(RWY["width_ft"][i])==False:
-                RWY_info[RWY_info_i]+=f" • {KFSfstr.notation_tech(int(RWY['width_ft'][i])*0.3048, 2)}m"  #Pistenbreite
+                RWY_info[RWY_info_i]+=f" • {KFS.fstr.notation_tech(int(RWY['width_ft'][i])*0.3048, 2)}m"  #Pistenbreite
             if pd.isna(RWY["surface"][i])==False:
                 RWY_info[RWY_info_i]+=f", {RWY['surface'][i].upper()}"                      #Pistenoberfläche
             if pd.isna(RWY["lighted"][i])==False and RWY["lighted"][i]==0:                  #wenn nicht beleuchtet:
@@ -65,11 +64,11 @@ async def airport_info(station, station_name, station_elev, frequency_DB, navaid
             else:
                 continue
             if pd.isna(RWY["length_ft"][i])==False:
-                RWY_info[RWY_info_i]+=f": {KFSfstr.notation_tech(int(RWY['length_ft'][i])*0.3048, 2)}m"  #Pistenlänge
+                RWY_info[RWY_info_i]+=f": {KFS.fstr.notation_tech(int(RWY['length_ft'][i])*0.3048, 2)}m"  #Pistenlänge
             if pd.isna(RWY["he_displaced_threshold_ft"][i])==False:                                                                     #wenn Schwelle versetzt vorhanden:
-                RWY_info[RWY_info_i]+=f" ({KFSfstr.notation_tech((int(RWY['length_ft'][i])-int(RWY['he_displaced_threshold_ft'][i]))*0.3048, 2)}m)"  #LDA
+                RWY_info[RWY_info_i]+=f" ({KFS.fstr.notation_tech((int(RWY['length_ft'][i])-int(RWY['he_displaced_threshold_ft'][i]))*0.3048, 2)}m)"  #LDA
             if pd.isna(RWY["width_ft"][i])==False:
-                RWY_info[RWY_info_i]+=f" • {KFSfstr.notation_tech(int(RWY['width_ft'][i])*0.3048, 2)}m"  #Pistenbreite
+                RWY_info[RWY_info_i]+=f" • {KFS.fstr.notation_tech(int(RWY['width_ft'][i])*0.3048, 2)}m"  #Pistenbreite
             if pd.isna(RWY["surface"][i])==False:
                 RWY_info[RWY_info_i]+=f", {RWY['surface'][i].upper()}"                      #Pistenoberfläche
             if pd.isna(RWY["lighted"][i])==False and RWY["lighted"][i]==0:                  #wenn nicht beleuchtet:
@@ -77,12 +76,12 @@ async def airport_info(station, station_name, station_elev, frequency_DB, navaid
             RWY_info[RWY_info_i]+="\n"
     
     RWY_info=RWY_info[0]+RWY_info[1]
-    KFSlog.write("\rRunway information generated.")
-    KFSlog.write(RWY_info)
+    KFS.log.write("\rRunway information generated.")
+    KFS.log.write(RWY_info)
 
 
     #Frequenzinformationen zusammenstellen
-    KFSlog.write("Generating frequency information...")
+    KFS.log.write("Generating frequency information...")
     for i in freq.index:
         if pd.isna(freq["frequency_mhz"][i])==True: #wenn Frequenz nicht vorhanden:
             continue                                #Eintrag überspringen
@@ -90,13 +89,13 @@ async def airport_info(station, station_name, station_elev, frequency_DB, navaid
             freq_info+=f"{freq['type'][i].upper()}" #Dienstleistungstyp
         #if pd.isna(Freq["description"][i])==False and Freq['type'][i]!=Freq['description'][i]:  #wenn Beschreibung vorhanden und ungleich Typ:
         #    Freq_Info+=f"/{Freq['description'][i]}" #zusätzlich Dienstleistungsbeschreibung (Name)
-        freq_info+=f": {KFSfstr.notation_tech(float(freq['frequency_mhz'][i])*1e6, -3, round_static=True, trailing_zeros=False)}Hz\n"
-    KFSlog.write("\rFrequency information generated.")
-    KFSlog.write(freq_info)
+        freq_info+=f": {KFS.fstr.notation_tech(float(freq['frequency_mhz'][i])*1e6, -3, round_static=True, trailing_zeros=False)}Hz\n"
+    KFS.log.write("\rFrequency information generated.")
+    KFS.log.write(freq_info)
 
 
     #Funknavigationhilfsinformationen zusammenstellen
-    KFSlog.write("Generating navaid information...")
+    KFS.log.write("Generating navaid information...")
     for i in nav.index:
         if pd.isna(nav["frequency_khz"][i])==True:  #wenn Frequenz nicht vorhanden:
             continue                                #Eintrag überspringen
@@ -106,9 +105,9 @@ async def airport_info(station, station_name, station_elev, frequency_DB, navaid
             nav_info+=f"{nav['name'][i]}"
         if pd.isna(nav["ident"][i])==False:
             nav_info+=f" ({nav['ident'][i].upper()})"
-        nav_info+=f": {KFSfstr.notation_tech(float(nav['frequency_khz'][i])*1e3, -3, round_static=True, trailing_zeros=False)}Hz\n"
-    KFSlog.write("\rNavaid information generated.")
-    KFSlog.write(nav_info)
+        nav_info+=f": {KFS.fstr.notation_tech(float(nav['frequency_khz'][i])*1e3, -3, round_static=True, trailing_zeros=False)}Hz\n"
+    KFS.log.write("\rNavaid information generated.")
+    KFS.log.write(nav_info)
 
 
     #Nachrichten schicken
@@ -134,5 +133,5 @@ async def airport_info(station, station_name, station_elev, frequency_DB, navaid
         message_send+="Do not use for flight operations! Data source is inofficial (https://ourairports.com/data/)."
 
     await message.channel.send(message_send)    #Nachricht an Discord abschicken
-    KFSlog.write("Runways, frequencies, navaids, and elevation sent.")
+    KFS.log.write("Runways, frequencies, navaids, and elevation sent.")
     return
