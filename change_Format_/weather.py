@@ -12,7 +12,7 @@ def change_format_weather(info_list, i):
 
         j=0
         while j<len(info_list[i]):
-            if j==0 and re.search("^[+-]$", info_list[i])!=None:    #wenn Intensitätsvorzeichen: überspringen
+            if j==0 and re.search("^[+-]", info_list[i])!=None:     #wenn Intensitätsvorzeichen: überspringen
                 j+=1
                 continue
             if "weather_forbidden" in WEATHER_MIN and re.search(WEATHER_MIN["weather_forbidden"], info_list[i][j:j+2])!=None:   #bei dem Wetter nich fliegen, Sicht, Vereisung, Stürme etc
@@ -24,3 +24,4 @@ def change_format_weather(info_list, i):
         if bold==True:
             info_new=f"**{info_new}**"
         return " "+info_new
+    

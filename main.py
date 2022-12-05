@@ -1,14 +1,15 @@
-import discord                          #Discord
-import discord.ext.tasks                #Discord Event Scheduler
-import datetime as dt                   #für Zeitpunkt aktuell
-import KFS.log                          #Debug-KFS.log statt print
-import pandas as pd                     #Dataframes
-import re                               #Regular Expressions, für Formatsuch
-import requests                         #HTTP Zeuch Exceptions
-from airport_info  import airport_info  #Flughafeninformationsbefehl
-from init_DB       import init_DB       #Datenbanken herunterladen oder aus Datei laden
-from process_METAR import process_METAR #METAR herunterladen und konvertieren
-from process_TAF   import process_TAF   #TAF herunterladen und konvertieren
+import discord              #Discord
+import discord.ext.tasks    #Discord Event Scheduler
+import datetime as dt       #für Zeitpunkt aktuell
+import KFS.log, KFS.fstr    #Debug-KFS.log statt print
+import pandas as pd         #Dataframes
+import re                   #Regular Expressions, für Formatsuch
+import requests             #HTTP Zeuch Exceptions
+from airport_info     import airport_info   #Flughafeninformationsbefehl
+from init_DB          import init_DB        #Datenbanken herunterladen oder aus Datei laden
+from process_METAR    import process_METAR  #METAR herunterladen und konvertieren
+from process_TAF      import process_TAF    #TAF herunterladen und konvertieren
+from weather_minimums import WEATHER_MIN
 
 
 #behalten über Laufzeit ganze
@@ -265,12 +266,12 @@ async def main():
         if station_elev!=None:                                                                      #wenn Flughafenhöhe vorhanden:
             message_send+=f"```Elevation = {station_elev:,.0f}m ({station_elev/0.3048:,.0f}ft)```\n----------\n".replace(",", ".")  #Station_Elev zur Kontrolle auch schicken
         
-        if METAR_o!="" or TAF_o!="":                                                                #wenn ein METAR oder TAF geschickt wurde: Hinweis
+        if METAR_o!="" or TAF_o!="":                                                                #wenn ein METAR oder TAF geschickt wurde: Hinweise
             message_send+="Only use original METAR and TAF for flight operations!\nClouds are given as [coverage][altitude]|[height].\n"
-        if station_name=="":                                                                        #wenn Flughafenname nicht vorhanden: Fehlermeldung
-            message_send+="Station could not be found in airport database.\nClouds are given as heights. Winds are assumed direct crosswind and will be marked at 10m/s or more. Variable winds are assumed direct tailwind and will be marked at 5m/s or more.\n"
-        elif station_elev==None:
-            message_send+="Station could not be found in airport database.\nClouds are given as heights.\n"
+            if station_name=="":                                                                    #wenn METAR gefunden, aber Flughafenname nicht vorhanden: Warnmeldung
+                message_send+=f"Clouds are given as heights. Winds are assumed direct crosswind and will be marked at {KFS.fstr.notation_tech(WEATHER_MIN['CWC'], 2)}m/s or more. Variable winds are assumed direct tailwind and will be marked at {KFS.fstr.notation_tech(WEATHER_MIN['TWC'], 2)}m/s or more.\n"
+            elif station_elev==None:
+                message_send+=f"Clouds are given as heights.\n"
         
         try:
             await message.channel.send(message_send)    #Nachricht an Discord abschicken
