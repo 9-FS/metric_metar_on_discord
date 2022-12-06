@@ -22,9 +22,9 @@ def change_format_vis(info_list, i):
             elif re.search("[A-Z]", info_list[i][j])!=None: #wenn Buchstabe:
                 if 0<len(vis):                              #wenn Vis im Puffer: konvertieren und weiterleiten
                     if 5e3<=int(vis):
-                        info_new+=f"{KFS.fstr.notation_tech(int(vis), 1)}m/"
+                        info_new+=f"{KFS.fstr.notation_tech(vis, 1)}m/"
                     else:
-                        info_new+=f"{KFS.fstr.notation_tech(int(vis), 2)}m/"
+                        info_new+=f"{KFS.fstr.notation_tech(vis, 2)}m/"
                         
                     if "vis" in WEATHER_MIN and int(vis)<WEATHER_MIN["vis"]:    #Vis min.
                         bold=True
@@ -34,9 +34,9 @@ def change_format_vis(info_list, i):
             if j==len(info_list[i])-1:                      #wenn Durchgang letzter:
                 if 0<len(vis):                              #wenn Vis im Buffer: konvertieren und weiterleiten
                     if 5e3<=int(vis):
-                        info_new+=f"{KFS.fstr.notation_tech(int(vis), 1)}m"
+                        info_new+=f"{KFS.fstr.notation_tech(vis, 1)}m"
                     else:
-                        info_new+=f"{KFS.fstr.notation_tech(int(vis), 2)}m"
+                        info_new+=f"{KFS.fstr.notation_tech(vis, 2)}m"
                         
                     if "vis" in WEATHER_MIN and int(vis)<WEATHER_MIN["vis"]:    #Vis min.
                         bold=True
