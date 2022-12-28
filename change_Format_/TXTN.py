@@ -23,7 +23,7 @@ def change_format_TXTN(info, date):
             DT+=datetime.timedelta(days=1)                                          #Tag hinzufügen
         DT+=datetime.timedelta(hours=int(info[8:10]))                               #zu Evenntdatum Uhrzeit hinzufügen
 
-        info_new=f"T{info[1]}{DT.strftime('%dT%H')}/{info[3:5]}°C"
+        info_new=f"T{info[1]}{DT.strftime('%dT%H')}/-{info[3:5]}°C"
 
         if ("temp_min" in WEATHER_MIN and int(info[3:5])<WEATHER_MIN["temp_min"]) or ("temp_max" in WEATHER_MIN and WEATHER_MIN["temp_max"]<int(info[3:5])):    #wenn Temperatur außerhalb Grenzen, wegen Leistungstabellen und Vereisung
             info_new=f"**{info_new}**"
