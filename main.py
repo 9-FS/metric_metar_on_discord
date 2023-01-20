@@ -153,25 +153,26 @@ async def main():
         #METAR und TAF herunterladen und konvertieren
         try:
             METAR_o, METAR=process_METAR(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT)
+        except requests.ConnectTimeout:     #wenn nicht erfolgreich: abbrechen
+            KFS.log.write(f"\rDownloading METAR timed out after {DOWNLOAD_TIMEOUT}s.")
+            force_print=True                #standardmäßig drucken zwingen
+            return
         except requests.ConnectionError:    #wenn nicht erfolgreich: abbrechen
             KFS.log.write("\rDownloading METAR failed.")
             force_print=True                #standardmäßig drucken zwingen
             return
-        except requests.ReadTimeout:        #wenn nicht erfolgreich: abbrechen
-            KFS.log.write(f"\rDownloading METAR timed out after {DOWNLOAD_TIMEOUT}s.")
-            force_print=True                #standardmäßig drucken zwingen
-            return
+        
 
         if append_TAF==True:
             try:
                 TAF_o, TAF=process_TAF(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT)
-            except requests.ConnectionError:    #wenn nicht erfolgreich: TAF nicht drucken
-                KFS.log.write("\rDownloading TAF failed. Continuing without TAF...")
+            except requests.ConnectTimeout:     #wenn nicht erfolgreich: TAF nicht drucken
+                KFS.log.write(f"\rDownloading TAF timed out after {DOWNLOAD_TIMEOUT}s. Continuing without TAF...")
                 append_TAF=False
                 TAF_o=""
                 TAF=""
-            except requests.ReadTimeout:    #wenn nicht erfolgreich: TAF nicht drucken
-                KFS.log.write(f"\rDownloading TAF timed out after {DOWNLOAD_TIMEOUT}s. Continuing without TAF...")
+            except requests.ConnectionError:    #wenn nicht erfolgreich: TAF nicht drucken
+                KFS.log.write("\rDownloading TAF failed. Continuing without TAF...")
                 append_TAF=False
                 TAF_o=""
                 TAF=""
