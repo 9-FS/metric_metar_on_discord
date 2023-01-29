@@ -1,0 +1,9 @@
+*.bat
+*.exe
+*.pyc
+discord_bot_token.txt
+test.py
+/__pycache__/
+/Database/
+/Log/
+/Discord METAR venv/
