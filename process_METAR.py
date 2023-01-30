@@ -1,5 +1,4 @@
 import datetime as dt
-from multiprocessing.sharedctypes import Value
 import re
 import requests #http Zeugs
 from change_format                  import change_format                    #Informationsformat ändern
