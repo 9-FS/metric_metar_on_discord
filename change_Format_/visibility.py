@@ -1,131 +1,107 @@
-import re   #Regular Expressions
-import KFS.fstr
+import KFS
+import re
 from weather_minimums import WEATHER_MIN
 
 
-def change_format_vis(info_list, i):
-    if re.search("9999", info_list[i])!=None:
-        info_list[i]="10km+"
-        return " "+info_list[i]
+def change_format_vis(info_list: list, i: int) -> str|None:
+    re_match: re.Match|None
+    re_match_1: re.Match|None
+    re_match_2: re.Match|None
+
+    PLUS_MINUS={
+        "P": "+",
+        "M": "-",
+        "": "",
+        None: ""
+    }
 
 
-    if re.search("^([PM]|)[0-9][0-9][0-9][0-9](N|NE|E|SE|S|SW|W|NW|)$", info_list[i])!=None:
-        bold=False
-        info_new=""
-        vis=""
+    #visibility 10km+
+    re_match=re.search("^9999$", info_list[i])
+    if re_match!=None:
+        return f" 10km+"
+
+
+    #visibility normal
+    re_match=re.search("^(?P<plus_minus>[PM]?)(?P<visibility>[0-9]{4})(?P<direction>(N|NE|E|SE|S|SW|W|NW)?)$", info_list[i])
+    if re_match!=None:
+        direction: str=re_match.groupdict()["direction"]
+        info_new: str
+        plus_minus: str=PLUS_MINUS[re_match.groupdict()["plus_minus"]]
+        visibility: float=int(re_match.groupdict()["visibility"])
+
+        
+        if visibility<5e3: #if visbility<5km: round to 2 significant digits
+            info_new=f"{KFS.fstr.notation_tech(visibility, 2)}m"
+        else:       #if 5km<=visibility: round to whole km
+            info_new=f"{KFS.fstr.notation_tech(visibility, -3, round_static=True)}m"
+        
+        info_new+=plus_minus    #append plus or minus
+
+        if direction!="":   #if direction given: append
+            info_new+=f"/{direction}"
+        
+        if "vis" in WEATHER_MIN and visibility<WEATHER_MIN["vis"]:  #if visibility below minimums: mark
+            info_new=f"**{info_new}**"
+        return f" {info_new}"
+
+
+    #military base format
+    re_match=re.search("^(?P<visibility>[0-9]{1,2})KM$", info_list[i])
+    if re_match!=None:
+        info_new: str
+        visibility: float=int(re_match.groupdict()["visibility"])*1000
+
+
+        info_new=f"{KFS.fstr.notation_tech(visibility, -3, round_static=True)}m"
+        
+        if "vis" in WEATHER_MIN and visibility<WEATHER_MIN["vis"]:  #if visibility below minimums: mark
+            info_new=f"**{info_new}**"
+        return f" {info_new}"
+
+
+    #USA: visibility [SM]
+    re_match=re.search("^(?P<plus_minus>[PM]?)(?P<visibility>[0-9]{1,2})SM$", info_list[i])
+    if re_match!=None:
+        info_new: str
+        plus_minus: str=PLUS_MINUS[re_match.groupdict()["plus_minus"]]
+        visibility: float=int(re_match.groupdict()["visibility"])*KFS.convert_to_SI.length["SM"]
         
 
-        for j in range(len(info_list[i])):
-            if   re.search("[0-9]", info_list[i][j])!=None: #wenn Zahl:
-                vis+=info_list[i][j]                        #Vis Teil
-            
-            elif re.search("[A-Z]", info_list[i][j])!=None: #wenn Buchstabe:
-                if 0<len(vis):                              #wenn Vis im Puffer: konvertieren und weiterleiten
-                    if 5e3<=int(vis):
-                        info_new+=f"{KFS.fstr.notation_tech(vis, 1)}m/"
-                    else:
-                        info_new+=f"{KFS.fstr.notation_tech(vis, 2)}m/"
-                        
-                    if "vis" in WEATHER_MIN and int(vis)<WEATHER_MIN["vis"]:    #Vis min.
-                        bold=True
-                    vis=""
-                info_new+=info_list[i][j]
-            
-            if j==len(info_list[i])-1:                      #wenn Durchgang letzter:
-                if 0<len(vis):                              #wenn Vis im Buffer: konvertieren und weiterleiten
-                    if 5e3<=int(vis):
-                        info_new+=f"{KFS.fstr.notation_tech(vis, 1)}m"
-                    else:
-                        info_new+=f"{KFS.fstr.notation_tech(vis, 2)}m"
-                        
-                    if "vis" in WEATHER_MIN and int(vis)<WEATHER_MIN["vis"]:    #Vis min.
-                        bold=True
-
-        if bold==True:
+        info_new=f"{KFS.fstr.notation_tech(visibility, 2)}m{plus_minus}"
+        
+        if "USA_vis" in WEATHER_MIN and visibility<WEATHER_MIN["USA_vis"]:  #if visibility below USA minimums: mark
             info_new=f"**{info_new}**"
-        return " "+info_new
-
-
-    if re.search("^([0-9]|)[0-9]KM$", info_list[i])!=None:
-        bold=False
-        info_new=""
-        vis=""
-
-
-        for j in range(len(info_list[i])):
-            if   re.search("[0-9]", info_list[i][j])!=None: #wenn Zahl:
-                vis+=info_list[i][j]                        #Vis Teil
-            
-            elif re.search("[A-Z]", info_list[i][j])!=None: #wenn Buchstabe:
-                if 0<len(vis):                              #wenn Vis im Puffer: konvertieren und weiterleiten, Buchstaben ignorieren
-                    info_new+=f"{KFS.fstr.notation_tech(int(vis)*1e3, 2)}m"
-                    
-                    if "vis" in WEATHER_MIN and int(vis)*1e3<WEATHER_MIN["vis"]:    #Vis min.
-                        bold=True
-                    break
-
-        if bold==True:
-            info_new=f"**{info_new}**"
-        return " "+info_new
-
-    if re.search("^([PM]|)([0-9]|)[0-9]SM$", info_list[i])!=None:
-        bold=False
-        info_new=""
-        vis=""
-
-
-        for j in range(len(info_list[i])):
-            if re.search("[0-9]", info_list[i][j])!=None:   #wenn Zahl:
-                vis+=info_list[i][j]                        #Vis Teil
-            
-            elif re.search("[A-Z]", info_list[i][j])!=None: #wenn Buchstabe:
-                if 0<len(vis):                              #wenn Vis im Buffer: konvertieren und weiterleiten
-                    info_new+=f"{KFS.fstr.notation_tech(int(vis)*1609.344, 2)}m"
-                    
-                    if "USA_vis" in WEATHER_MIN and int(vis)*1609.344<WEATHER_MIN["USA_vis"]:   #USA Vis min.
-                        bold=True
-                    break
-
-        if bold==True:
-            info_new=f"**{info_new}**"
-        return " "+info_new
+        return f" {info_new}"
     
+
+    #USA visibility a+b/c [SM]
+    re_match_1=re.search("^(?P<vis_A>[0-9])$", info_list[i])    #single digit a as part of compound fraction a+b/c
     try:
-        if re.search("^[0-9]$", info_list[i])!=None and re.search("^[0-9]/[0-9]SM$", info_list[i+1])!=None:             #wenn einzelne Ziffer a Teil von Sicht "a b/cSM":
-            info_list[i+1]=f"{int(info_list[i+1][0])+int(info_list[i])*int(info_list[i+1][2])}/{info_list[i+1][2]}SM"   #Umwandeln in einzelnen Bruch (b+a*c)/c
-            info_list.pop(i)    #einzelne Zahl a entfernen
-    except IndexError:          #Wenn Exception weil nächstes Element nicht existiert:
-        pass                    #nix tun
+       re_match_2=re.search("^(?P<vis_B>[0-9])/(?P<vis_C>[0-9])SM$", info_list[i+1])    #is element next rest of fraction b/c?
+    except IndexError:          #if exception because element next does not exist: default none
+        re_match_2=None
+    if re_match_1!=None and re_match_2!=None:
+        vis_A: int=int(re_match_1.groupdict()["vis_A"])
+        vis_B: int=int(re_match_2.groupdict()["vis_B"])
+        vis_C: int=int(re_match_2.groupdict()["vis_C"])
 
 
-    if re.search("^([PM]|)([0-9]|)[0-9]/([0-9]|)[0-9]SM$", info_list[i])!=None:
-        bold=False
-        slash_found=False
-        vis1=""
-        vis2=""
-        info_new=""
+        info_list[i+1]=f"{vis_A*vis_C+vis_B}/{vis_C}SM" #convert to single fraction a+b/c=(a*c+b)/c
+        info_list.pop(i)                                #remove single digit a
+        #do not return and convert single fraction (a*c+b)/c in next if statement
 
-        for j in range(len(info_list[i])):
-            if   slash_found==False and re.search("[A-Z]", info_list[i][j])!=None:  #wenn Slash nicht gefunden und Buchstabe:
-                info_new+=info_list[i][j]                                           #weiterleiten
-            
-            elif slash_found==False and re.search("[0-9]", info_list[i][j])!=None:  #wenn Slash nicht gefunden und Zahl:
-                vis1+=info_list[i][j]                                               #Vis1 Teil
-            
-            elif slash_found==False and info_list[i][j]=="/":                       #wenn noch kein Slash und Slash gefunden:
-                slash_found=True                                                    #gefunden
-            
-            elif slash_found==True and re.search("[0-9]", info_list[i][j])!=None:   #wenn Slash gefunden und Zahl:
-                vis2+=info_list[i][j]                                               #Vis2 Teil
-            
-            elif slash_found==True and re.search("[A-Z]", info_list[i][j])!=None:                           #wenn Slash gefunden und Buchstabe
-                if 0<len(vis1) and 0<len(vis2):                                                             #wenn Vis1 und Vis2 im Puffer: alles konvertieren und weiterleiten
-                    info_new+=f"{KFS.fstr.notation_tech(int(vis1)/int(vis2)*1609.344, 2)}m"
-                    
-                    if "USA_vis" in WEATHER_MIN and int(vis1)/int(vis2)*1609.344<WEATHER_MIN["USA_vis"]:    #USA Vis min.
-                        bold=True
-                    break
 
-        if bold==True:
+    #USA visibility b/c [SM]
+    re_match=re.search("^(?P<plus_minus>[PM]?)(?P<vis_B>[0-9]{1,2})/(?P<vis_C>[0-9]{1,2})SM$", info_list[i])
+    if re_match!=None:
+        info_new: str
+        plus_minus: str=PLUS_MINUS[re_match.groupdict()["plus_minus"]]
+        visibility: float=int(re_match.groupdict()["vis_B"])/int(re_match.groupdict()["vis_C"])*KFS.convert_to_SI.length["SM"]
+
+
+        info_new=f"{KFS.fstr.notation_tech(visibility, 2)}m{plus_minus}"
+        
+        if "USA_vis" in WEATHER_MIN and visibility<WEATHER_MIN["USA_vis"]:  #if visibility below USA minimums: mark
             info_new=f"**{info_new}**"
-        return " "+info_new
+        return f" {info_new}"

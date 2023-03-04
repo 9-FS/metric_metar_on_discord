@@ -1,343 +1,354 @@
-import discord              #Discord
-import discord.ext.tasks    #Discord Event Scheduler
-import datetime as dt       #für Zeitpunkt aktuell
-import KFS.log, KFS.fstr    #Debug-KFS.log statt print
-import pandas as pd         #Dataframes
-import re                   #Regular Expressions, für Formatsuch
-import requests             #HTTP Zeuch Exceptions
-from airport_info     import airport_info   #Flughafeninformationsbefehl
-from init_DB          import init_DB        #Datenbanken herunterladen oder aus Datei laden
-from process_METAR    import process_METAR  #METAR herunterladen und konvertieren
-from process_TAF      import process_TAF    #TAF herunterladen und konvertieren
-from weather_minimums import WEATHER_MIN
+import discord, discord.ext.tasks   #discord, discord event scheduler
+import datetime as dt               #datetime
+import KFS
+import logging                      #standard logging
+import pandas                       #DataFrame
+import re                           #regular expressions
+import requests                     #HTTP exceptions
+from aerodrome_info    import aerodrome_info    #aerodrome information command
+from DB_Type           import DB_Type           #database type for init_DB
+from Doc_Type          import Doc_Type          #process METAR or TAF?
+from init_DB           import init_DB           #download database or load from file
+from process_METAR_TAF import process_METAR_TAF #download and convert METAR or TAF
+from weather_minimums  import WEATHER_MIN       #weather minimums for marking
 
 
-#behalten über Laufzeit ganze
-airport_DB=pd.DataFrame()                                                   #Flughafendatenbank
-client=None                                                                 #Discord-Client
-country_DB=pd.DataFrame()                                                   #Länderdatenbank für Ländernamen
-DT_DB_last_updated=dt.datetime.now(dt.timezone.utc)                         #Datenbanken zuletzt aktualisiert Zeitpunkt
-discord_bot_token=""                                                        #Bot-Token
-discord_channel="botspam"                                                   #Botkanal
-discord_channel_ID=839081784008245248                                       #Botkanal-ID
-discord_username="Chemtrail Sprayer#6530"                                   #Nutzername eigener für Kontrollbefehlberechtigung
-DT_now=dt.datetime.now(dt.timezone.utc)                                     #Durchgang aktuell Zeitpunkt
-DOWNLOAD_TIMEOUT=50                                                         #Timeout für METAR- und TAF-Downloads
-force_print=True                                                            #Station drucken erzwingen (Nutzereingabe) oder nicht (Abo)
-frequency_DB=pd.DataFrame()                                                 #Frequenzdatenbanke für Info-Befehl
-message_last=None                                                           #Nachricht zuletzt, für Abonnement
-METAR_o_last=""                                                             #METAR zuletzt, für Abonnement
-METAR_update_finished=False                                                 #hat Programm in Abo 1 Runde gewartet bis Quellwebseite mit METAR-Aktualisierung vollständig durch?
-navaid_DB=pd.DataFrame()                                                    #Navaiddatenbank für Info-Befehl
-RWY_DB=pd.DataFrame()                                                       #Pistendatenbank für Seitenwindkomponenten und Info-Befehl
-TAF_o_last=""                                                               #TAF zuletzt, für Abonnement
-TAF_update_finished=False                                                   #hat Programm in Abo 1 Runde gewartet bis Quellwebseite mit TAF-Aktualisierung vollständig durch?
-terminate=False                                                             #Programm schließen?
+#keep over runtime whole
+aerodrome_DB: pandas.DataFrame=pandas.DataFrame()   #aerodrome database
+country_DB: pandas.DataFrame=pandas.DataFrame()     #country database for country names
+discord_bot_token: str|None                         #discord bot token
+DISCORD_CHANNEL: str="botspam"                      #bot channel
+DISCORD_CHANNEL_ID: int=839081784008245248          #bot channel ID
+DOWNLOAD_TIMEOUT: int=50                            #METAR and TAF download timeouts [s]
+COMMANDS_ALLOWED: tuple=(                           #commands allowed
+    "^(?P<station_ICAO>[0-9A-Z]{4})$",
+    "^(?P<station_ICAO>[0-9A-Z]{4}) TAF$",
+    #"^(?P<station_ICAO>[0-9A-Z]{4}) INFO$"
+)
+force_print: bool=True                                  #force sending to discord (after user input request) or not (subscription)
+frequency_DB: pandas.DataFrame=pandas.DataFrame()       #frequency database for information command
+message_previous: None|str=None                         #message previous for subscription
+METAR_o_previous: None|str                              #METAR previous for subscription
+METAR_update_finished: bool                             #has program in subscription mode waited 1 round until source website refreshed METAR completely?
+navaid_DB: pandas.DataFrame=pandas.DataFrame()          #navaid database for information command
+now_DT: dt.datetime=dt.datetime.now(dt.timezone.utc)    #DT currently
+RWY_DB: pandas.DataFrame=pandas.DataFrame()             #runway database for cross wind components and information command
+TAF_o_previous: str|None                                #TAF previous for subscription
+TAF_update_finished: bool                               #has program in subscription mode waited 1 round until source website refreshed TAF completely?
 
 
-#@KFS.log.timeit   does not work with async functions
-async def main():
-    intents=discord.Intents.default()   #standard permissions with message contents in addition
-    intents.message_content=True
-    client=discord.Client(intents=intents)
+@KFS.log.timeit_async
+async def main() -> None:
+    intents=discord.Intents.default()               #standard permissions
+    intents.message_content=True                    #in addition with message contents
+    discord_client=discord.Client(intents=intents)  #create client instance
 
-    @client.event
+
+    @discord_client.event
     async def on_ready():
-        global airport_DB
+        """
+        Executed as soon as bot started up and is ready. Initialised databases and then informs the user that it is ready to use.
+        """
+
+        global aerodrome_DB
         global country_DB
-        global discord_bot_token
-        global DT_DB_last_updated
         global frequency_DB
         global navaid_DB
         global RWY_DB
-
-
-        KFS.log.write("--------------------------------------------------")
-        DT_now=dt.datetime.now(dt.timezone.utc)
         
-        #Datenbanken initialisieren
-        airport_DB  =init_DB("Airport",   airport_DB,   DT_now)
-        country_DB  =init_DB("Country",   country_DB,   DT_now)
-        frequency_DB=init_DB("Frequency", frequency_DB, DT_now)
-        navaid_DB   =init_DB("Navaid",    navaid_DB,    DT_now)
-        RWY_DB      =init_DB("Runway",    RWY_DB,       DT_now)
-        DT_DB_last_updated=DT_now   #Datenbanken jetzt zuletzt aktualisiert
 
-        KFS.log.write("Discord client started.")
-        await client.get_channel(discord_channel_ID).send("Discord client started.")
+        logging.info("--------------------------------------------------")
+        now_DT=dt.datetime.now(dt.timezone.utc)
+        
+        #initialise databases
+        aerodrome_DB=init_DB(DB_Type.aerodrome, aerodrome_DB, now_DT, DOWNLOAD_TIMEOUT)
+        country_DB  =init_DB(DB_Type.country,   country_DB,   now_DT, DOWNLOAD_TIMEOUT)
+        frequency_DB=init_DB(DB_Type.frequency, frequency_DB, now_DT, DOWNLOAD_TIMEOUT)
+        navaid_DB   =init_DB(DB_Type.navaid,    navaid_DB,    now_DT, DOWNLOAD_TIMEOUT)
+        RWY_DB      =init_DB(DB_Type.runway,    RWY_DB,       now_DT, DOWNLOAD_TIMEOUT)
+
+        logging.info("Discord client started.")
+        await discord_client.get_channel(DISCORD_CHANNEL_ID).send("Discord client started.") #type:ignore
         return
 
-    @client.event
+    @discord_client.event
     async def on_message(message):
+        """
+        Executed every time a message is sent on the server. If the message is not from the bot itself and in the botspam channel, process it.
+
+        - \"{ICAO code}\" requests the current METAR and changes the subscribed station.
+
+        - \"{ICAO code} TAF\" requests the current METAR and TAF and changes the subscribed station.
+
+        - \"{ICAO code} INFO\" requests information and does not change the subscribed station.
+        """
+
         global force_print
-        global message_last
-        global METAR_o_last
+        global message_previous
+        global METAR_o_previous
         global METAR_update_finished
-        global TAF_o_last
+        global TAF_o_previous
         global TAF_update_finished
 
-        #behalten nur für Aktualisierungsdurchlauf aktuell
-        append_TAF=False    #TAF noch dranhängen?
-        message_send=""     #Nachricht final an Discord
-        METAR_o=""          #METAR Originalformatierung
-        METAR=""            #METAR Neuformatierung
-        station=""          #Flughafen relevant
-        station_elev=None   #Flughafenhöhe
-        station_name=""     #Flughafenname
-        TAF_o=""            #TAF Originalformatierung
-        TAF=""              #TAF Neuformatierung
+
+        #keep only for this iteration
+        append_TAF: bool    #append TAF?
+        INFO_command: bool  #information command?
+        message_send: str   #message final to discord
+        METAR_o: str|None   #METAR original format
+        METAR: str|None     #METAR my format
+        station: dict={}    #station parsed elev: float|None, ICAO: str, and name: str|None
+        TAF_o: str|None     #TAF original format
+        TAF: str|None       #TAF my format
 
 
-        if message.author==client.user or str(message.channel)!=discord_channel:    #wenn boteigene Nachricht oder außerhalb von botspam-Kanal: nix tun
-            force_print=True                                                        #standardmäßig drucken zwingen
-            return
+        class ContextManager():
+            def __enter__(self):
+                pass
+            def __exit__(self, exc_type, exc_value, exc_traceback): #upon exit, force print by default
+                global force_print
+                force_print=True
+        with ContextManager():  #upon exit, force print by default
+            if message.author==discord_client.user or str(message.channel)!=DISCORD_CHANNEL:    #if message from bot itself or outside botspam channel: do nothing
+                return
+            message.content=message.content.upper()
 
 
-        KFS.log.write("--------------------------------------------------")
+            logging.info("--------------------------------------------------")
+            now_DT=dt.datetime.now(dt.timezone.utc)
 
-
-        #Kontrollbefehle ausführen
-        """if str(message.author)==discord_username:   #wenn Nutzer eigener: Kontrollbefehle ausführen
-            if message.lower()=="stop": #wenn Stoppbefehl
-                KFS.log.write("Executing stop command...")
-                await message.channel.send('「Executing stop command.」\n')
-                #await client.close()    #Client schließen, Laden runterfahren
-                #TODO"""
+            #station_ICAO, append_TAF
+            for command in COMMANDS_ALLOWED:                            #did message match an allowed command?
+                re_match=re.search(command, message.content)
+                if re_match==None:                                      #if message did not match this command:
+                    continue
+                station["ICAO"]=re_match.groupdict()["station_ICAO"]    #parse station ICAO code
+                logging.info(f"Station: {station['ICAO']}")
+                if message.content.endswith("TAF")==True:               #if message ends with TAF:
+                    logging.info("TAF was requested.")
+                    append_TAF=True                                     #TAF requested, append TAF later
+                else:
+                    append_TAF=False
+                #if command.endswith("INFO"):                           #if matched command ends with INFO:
+                #    logging.info("INFO was requested.")
+                #    INFO_command=True                                  #INFO requested, get information later
+                #else:
+                INFO_command=False
+                break                                                   #command found, exit
+            else:                                                       #if message did not match any command:
+                logging.error(f"Last message \"{message.content}\" did not match any allowed command.")
+                return
             
-        
-        #Station herausfinden, TAF anhängen?, Info-Befehl?
-        if((re.search("^[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]$",      message.content.upper())!=None)   #wenn Nachricht letzte im Format "ICAO-Code"
-        or (re.search("^[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9] TAF$",  message.content.upper())!=None)   #TAF erwünscht
-        or (re.search("^[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9] INFO$", message.content.upper())!=None)): #nur Info erwünscht
-            station=message.content[0:4].upper()    #Station ist Nachrichtanfang
-            KFS.log.write(f"Station: {station}")
+            #station_name, station_elev
+            logging.info(f"Looking for {station['ICAO']} in aerodrome database...")
+            aerodrome=aerodrome_DB[aerodrome_DB["ident"]==station["ICAO"]] #aerodrome desired
+            aerodrome=aerodrome.reset_index(drop=True)
+            if aerodrome.empty==True:   #if aerodrome not found in database:
+                logging.warning(f"\rCould not find {station['ICAO']} in aerodrome database. No title, elevation, and runway directions available.")
+                station["elev"]=None
+                station["name"]=None
+            else:   #if aerodrome found in database:
+                logging.info(f"\rFound {station['ICAO']} in aerodrome database.")
+                country=country_DB[country_DB["code"]==aerodrome.at[0, "iso_country"]]  #country desired
+                country=country.reset_index(drop=True)
+                if country.empty==True: #if country not found in database:
+                    logging.warning(f"Could not find country of country code \"{aerodrome.at[0, 'iso_country']}\".")
+                    station["name"]=f"{aerodrome.at[0, 'iso_country']}, {aerodrome.at[0, 'name']}" #enter country code, aerodrome name
+                else:   #if country found in database:
+                    station["name"]=f"{country.at[0, 'name']}, {aerodrome.at[0, 'name']}"  #enter country, aerodrome name
+                logging.info(f"Name: {station['name']}")
 
-            if re.search("^[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9] TAF$",  message.content.upper())!=None:   #wenn "ICAO-Code TAF":
-                append_TAF=True     #TAF erwünscht
-                KFS.log.write("TAF was requested.")
+                if pandas.isna(aerodrome.at[0, "elevation_ft"])==True:  #if elevation unavailable:
+                    logging.warning(f"\r{station['ICAO']} has no elevation information in aerodrome database. No elevation available.")
+                    station["elev"]=None
+                else:                                                   #if elevation available:
+                    station["elev"]=aerodrome.at[0, "elevation_ft"]*KFS.convert_to_SI.length["ft"]  #save elevation [m]
+                    logging.info(f"Elevation: {KFS.fstr.notation_abs(station['elev'], 0, round_static=True)}m")
 
-        else:                                           #wenn Nachricht letzte nicht im Format "ICAO-Code" oder "ICAO-Code TAF"
-            KFS.log.write(f"Last message \"{message.content}\" is no ICAO format.")     #kein ICAO-Format, ignorieren
-            force_print=True                                                        #standardmäßig drucken zwingen
-            return
+            #information command
+            if INFO_command==True:  #if information command: execute that, then return without downloading METAR, TAF etc.
+                await aerodrome_info(station, frequency_DB, navaid_DB, RWY_DB, message)
+                return
+            
 
-        #Station_Name und Station_Elev
-        KFS.log.write(f"Looking for {station} in airport database...")
-        airport=airport_DB[airport_DB["ident"]==station]                                #Flughafen gesucht
-        airport=airport.reset_index(drop=True)
-        if airport.empty==False:                                                        #wenn Flughafen gefunden:
-            KFS.log.write(f"\r{station} found in airport database.")
-
-            if pd.isna(airport.at[0, "elevation_ft"])==False:                           #wenn Wert gegeben:
-                station_elev=round(airport.at[0, "elevation_ft"]*0.3048)                #Höhe eintragen [m]
-            country=country_DB[country_DB["code"]==airport.at[0, "iso_country"]]        #Land gesucht
-            country=country.reset_index(drop=True)
-            if country.empty==False:                                                    #wenn Flughafenland gefunden:
-                station_name=f"{country.at[0, 'name']}, {airport.at[0, 'name']}"        #Land, Name eintragen
-            else:                                                                       #wenn Flughafenland nicht gefunden:
-                KFS.log.write(f"Country of country code \"{airport.at[0, 'iso_country']}\" not found.")
-                station_name=f"{airport.at[0, 'iso_country']}, {airport.at[0, 'name']}" #Landcode, Name eintragen
-            KFS.log.write(f"Name: \"{station_name}\"")
-            if station_elev!=None:
-                KFS.log.write(" | "+f"Elev={station_elev:,.0f}m".replace(",", "."), append_to_line_current=True)
-        else:                                                                   #wenn Flughafen nicht gefunden:
-            KFS.log.write(f"\r{station} not found in airport database.")
-
-        #Info-Befehl
-        if re.search("^[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9] INFO$", message.content.upper())!=None: #wenn Info-Befehl:
-            await airport_info(station, station_name, station_elev, frequency_DB, navaid_DB, RWY_DB, message)
-            force_print=True    #standardmäßig drucken zwingen
-            return              #kein METAR schicken
-        
-
-        #METAR und TAF herunterladen und konvertieren
-        try:
-            METAR_o, METAR=process_METAR(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT)
-        except requests.ConnectTimeout:     #wenn nicht erfolgreich: abbrechen
-            KFS.log.write(f"\rDownloading METAR timed out after {DOWNLOAD_TIMEOUT}s.")
-            force_print=True                #standardmäßig drucken zwingen
-            return
-        except requests.ConnectionError:    #wenn nicht erfolgreich: abbrechen
-            KFS.log.write("\rDownloading METAR failed.")
-            force_print=True                #standardmäßig drucken zwingen
-            return
-        
-
-        if append_TAF==True:
+            #download and convert METAR and TAF
             try:
-                TAF_o, TAF=process_TAF(station, station_elev, RWY_DB, force_print, DOWNLOAD_TIMEOUT)
-            except requests.ConnectTimeout:     #wenn nicht erfolgreich: TAF nicht drucken
-                KFS.log.write(f"\rDownloading TAF timed out after {DOWNLOAD_TIMEOUT}s. Continuing without TAF...")
-                append_TAF=False
-                TAF_o=""
-                TAF=""
-            except requests.ConnectionError:    #wenn nicht erfolgreich: TAF nicht drucken
-                KFS.log.write("\rDownloading TAF failed. Continuing without TAF...")
-                append_TAF=False
-                TAF_o=""
-                TAF=""
+                METAR_o, METAR=process_METAR_TAF(Doc_Type.METAR, station, RWY_DB, now_DT, force_print, DOWNLOAD_TIMEOUT)
+            except requests.ConnectTimeout:     #if unsuccessful: abort
+                logging.error(f"\rDownloading METAR timed out after {DOWNLOAD_TIMEOUT}s.")
+                return
+            except requests.ConnectionError:    #if unsuccessful: abort
+                logging.error("\rDownloading METAR failed.")
+                return
+            
+            if append_TAF==True:    #if append TAF: append TAF
+                try:
+                    TAF_o, TAF=process_METAR_TAF(Doc_Type.TAF, station, RWY_DB, now_DT, force_print, DOWNLOAD_TIMEOUT)
+                except requests.ConnectTimeout:     #if unsuccessful: just no TAF
+                    logging.warning(f"\rDownloading TAF timed out after {DOWNLOAD_TIMEOUT}s. Continuing without TAF...")
+                    append_TAF=False
+                    TAF_o=None
+                    TAF=None
+                except requests.ConnectionError:    #if unsuccessful: just no TAF
+                    logging.warning("\rDownloading TAF failed. Continuing without TAF...")
+                    append_TAF=False
+                    TAF_o=None
+                    TAF=None
+            else:   #default TAF
+                TAF_o=None
+                TAF=None
 
 
-        #Nachricht drucken?, AboKFSlogik
-        if force_print==True:           #wenn drucken erzwingen: kein Abo
-            message_last=message        #Nutzernachricht zuletzt aktualisieren
-            METAR_o_last=METAR_o        #METAR original aktualisieren
-            TAF_o_last=TAF_o            #TAF orginal aktualisieren
-            METAR_update_finished=False #schon gewartet zurücksetzen
-            TAF_update_finished=False
-        
-        elif append_TAF==False:         #wenn kein drucken erzwingen: Abo; wenn TAF unerwünscht: TAF nicht berücksichtigen
-            if METAR_o_last==METAR_o:   #wenn METAR original mit letztem übereinstimmen und drucken nicht zwingen: Abo, nichts drucken
-                KFS.log.write("Original METAR has not been changed. Not sending anything.")
-                force_print=True        #standardmäßig aber drucken zwingen
-                return
-            elif METAR_o_last!=METAR_o and METAR_update_finished==False:    #wenn METAR original neu anders, noch nicht gewartet: Abo, 1 Runde warten damit Quellwebseite mit Aktualisierung garantiert fertig
-                KFS.log.write("Original METAR has changed, but update process may not have been finished yet. Not sending anything.")
-                METAR_update_finished=True   
-                force_print=True                                            #standardmäßig aber drucken zwingen
-                return
-            elif METAR_o_last!=METAR_o and METAR_update_finished==True:     #wenn METAR original neu anders, schon gewartet: Abo, 1 Runde gewartet und jetzt METAR aber mal senden
-                KFS.log.write("Original METAR has changed and update process should have been finished.")
-                METAR_o_last=METAR_o                                        #METAR original aktualisieren
-                METAR_update_finished=False                                 #schon gewartet zurücksetzen
-        
-        elif append_TAF==True:          #Abo; wenn TAF abonniert: TAF auch berücksichtigen
-            if METAR_o_last==METAR_o and TAF_o_last==TAF_o:                 #wenn METAR original und TAF original mit letztem übereinstimmen: Abo, nichts drucken
-                KFS.log.write("Original METAR and TAF have not been changed. Not sending anything.")
-                force_print=True                                            #standardmäßig aber drucken zwingen
-                return
-            elif(METAR_o_last!=METAR_o and TAF_o_last!=TAF_o
-                 and METAR_update_finished==False and TAF_update_finished==False):#wenn METAR original neu und TAF original neu anders, noch nicht gewartet: Abo, 1 Runde warten damit Quellwebseite mit Aktualisierung garantiert fertig
-                KFS.log.write("Original METAR and TAF have changed, but update process may not have been finished yet. Not sending anything.")
-                METAR_update_finished=True
-                TAF_update_finished=True
-                force_print=True                                            #standardmäßig aber drucken zwingen
-                return
-            elif METAR_o_last!=METAR_o and METAR_update_finished==False:    #wenn METAR original neu anders, noch nicht gewartet: Abo, 1 Runde warten damit Quellwebseite mit Aktualisierung garantiert fertig
-                KFS.log.write("Original METAR has changed, but update process may not have been finished yet. Not sending anything.")
-                METAR_update_finished=True
-                force_print=True                                            #standardmäßig aber drucken zwingen
-                return
-            elif TAF_o_last!=TAF_o and TAF_update_finished==False:          #wenn TAF original neu anders, noch nicht gewartet: Abo, 1 Runde warten damit Quellwebseite mit Aktualisierung garantiert fertig
-                KFS.log.write("Original TAF has changed, but update process may not have been finished yet. Not sending anything.")
-                TAF_update_finished=True
-                force_print=True                                            #standardmäßig aber drucken zwingen
-                return
-            elif(METAR_o_last!=METAR_o and TAF_o_last!=TAF_o
-                 and METAR_update_finished==True and TAF_update_finished==True):    #wenn METAR original neu und TAF original neu anders, schon gewartet: Abo, 1 Runde gewartet und jetzt METAR und TAF aber mal senden
-                KFS.log.write("Original METAR and TAF have changed and update process should have been finished.")
-                METAR_o_last=METAR_o                                        #METAR original aktualisieren
-                TAF_o_last=TAF_o                                            #TAF orginal aktualisieren
-                METAR_update_finished=False                                 #schon gewartet zurücksetzen
-                TAF_update_finished=False
-            elif METAR_o_last!=METAR_o and METAR_update_finished==True:     #wenn METAR original neu anders, schon gewartet: Abo, 1 Runde gewartet und jetzt METAR aber mal senden
-                KFS.log.write("Original METAR has changed and update process should have been finished.")
-                METAR_o_last=METAR_o                                        #METAR original aktualisieren
-                METAR_update_finished=False                                 #schon gewartet zurücksetzen
-                append_TAF=False                                            #METAR aktualisieren, aber TAF wahrscheinlich nicht, wegen Abo nur METAR schicken
-            elif TAF_o_last!=TAF_o and TAF_update_finished==True:           #wenn TAF original neu anders, schon gewartet: Abo, 1 Runde gewartet und jetzt METAR und TAF aber mal senden
-                KFS.log.write("Original TAF has changed and update process should have been finished.")
-                TAF_o_last=TAF_o                                            #TAF orginal aktualisieren
-                TAF_update_finished=False                                   #schon gewartet zurücksetzen
+            #print message? subscription logic
+            if force_print==True:                   #if force printing: no subscription
+                message_previous=message            #refresh message previous
+                METAR_o_previous=METAR_o            #refresh METAR original previous
+                TAF_o_previous=TAF_o                #refresh TAF orginal previous #type:ignore
+                METAR_update_finished=False         #reset already waited for METAR
+                TAF_update_finished=False           #reset already waited for TAF
+            
+            elif append_TAF==False:                                                 #subscription; if TAF undesired: disregard TAF
+                if METAR_o_previous==METAR_o:                                       #if METAR original same as previous one: subscription, don't print
+                    logging.info("Original METAR has not been changed. Not sending anything.")
+                    return
+                elif METAR_o_previous!=METAR_o and METAR_update_finished==False:    #if METAR original new different, but not waited yet: subscription, wait 1 round until source website refreshed METAR completely
+                    logging.info("Original METAR has changed, but update process may not have been finished yet. Not sending anything yet.")
+                    METAR_update_finished=True   
+                    return
+                elif METAR_o_previous!=METAR_o and METAR_update_finished==True:     #if METAR original new different and waited already: subscription, source website refreshed METAR completely, now send METAR
+                    logging.info("Original METAR has changed and update process should have been finished.")
+                    METAR_o_previous=METAR_o                                        #refresh METAR original previous
+                    METAR_update_finished=False                                     #reset already waited for METAR
+            
+            elif append_TAF==True:                                                  #subscription; if TAF desiredt: regard TAF
+                if METAR_o_previous==METAR_o and TAF_o_previous==TAF_o:             #if METAR original and TAF original same as previous one: subscription, don't print #type:ignore
+                    logging.info("Original METAR and TAF have not been changed. Not sending anything.")
+                    return
+                elif(METAR_o_previous!=METAR_o and TAF_o_previous!=TAF_o            #if METAR original new and TAF original new different, but not waited yet: subscription, wait 1 round until source website refreshed METAR and TAF completely #type:ignore
+                    and METAR_update_finished==False and TAF_update_finished==False):
+                    logging.info("Original METAR and TAF have changed, but update process may not have been finished yet. Not sending anything yet.")
+                    METAR_update_finished=True
+                    TAF_update_finished=True
+                    return
+                elif METAR_o_previous!=METAR_o and METAR_update_finished==False:    #if METAR original new different, but not waited yet: subscription, wait 1 round until source website refreshed METAR completely
+                    logging.info("Original METAR has changed, but update process may not have been finished yet. Not sending anything yet.")
+                    METAR_update_finished=True
+                    return
+                elif TAF_o_previous!=TAF_o and TAF_update_finished==False:          #if TAF original new different, but not waited yet: subscription, wait 1 round until source website refreshed TAF completely #type:ignore
+                    logging.info("Original TAF has changed, but update process may not have been finished yet. Not sending anything yet.")
+                    TAF_update_finished=True
+                    return
+                elif(METAR_o_previous!=METAR_o and TAF_o_previous!=TAF_o            #if METAR original new and TAF original new different and waited already: subscription, source website refreshed METAR and TAF completely, now send METAR and TAF #type:ignore
+                    and METAR_update_finished==True and TAF_update_finished==True):
+                    logging.info("Original METAR and TAF have changed and update process should have been finished.")
+                    METAR_o_previous=METAR_o                                        #refresh METAR original previous
+                    TAF_o_previous=TAF_o                                            #refresh TAF original previous #type:ignore
+                    METAR_update_finished=False                                     #reset already waited for METAR
+                    TAF_update_finished=False                                       #reset already waited for TAF
+                elif METAR_o_previous!=METAR_o and METAR_update_finished==True:     #if METAR original new different and waited already: subscription, source website refreshed METAR completely, now send METAR
+                    logging.info("Original METAR has changed and update process should have been finished.")
+                    METAR_o_previous=METAR_o                                        #refresh METAR original previous
+                    METAR_update_finished=False                                     #reset already waited for METAR
+                    append_TAF=False                                                #TAF did probably not refresh yet, subscription, only send METAR
+                elif TAF_o_previous!=TAF_o and TAF_update_finished==True:           #if TAF original new different and waited already: subscription, source website refreshed TAF completely, now send METAR and TAF #type:ignore
+                    logging.info("Original TAF has changed and update process should have been finished.")
+                    TAF_o_previous=TAF_o                                            #refresh TAF original previous #type:ignore
+                    TAF_update_finished=False                                       #reset already waited for TAF
 
-        #Nachrichten schicken
-        if append_TAF==False:
-            KFS.log.write("Sending METAR, original METAR, and elevation...")
-        elif append_TAF==True and TAF_o!=f"{station} TAF could not be found.":
-            KFS.log.write("Sending METAR, TAF, original METAR, original TAF, and elevation...")
-        elif append_TAF==True and TAF_o==f"{station} TAF could not be found.":
-            KFS.log.write("Sending METAR, original METAR, error message, and elevation...")
-
-        if station_name!="":                                        #wenn Flughafenname vorhanden:
-            message_send+=f"{station_name}\n----------\n"           #Flughafenname schicken
-        else:
-            message_send+="Station could not be found in airport database.\n----------\n"
-        if METAR_o!="":                                             #wenn METAR gefunden:
-            message_send+=f"```{METAR}```\n----------\n"            #METAR schicken
-        else:
-            message_send+="METAR could not be found.\n----------\n"
-        if append_TAF==True and TAF_o!="":                          #wenn TAF geschickt werden soll:
-            message_send+=f"```{TAF}```\n----------\n"              #TAF normal schicken
-        elif append_TAF==True and TAF_o=="":
-            message_send+="TAF could not be found.\n----------\n"
-        if METAR_o!="":                                                                             #wenn METAR gefunden:
-            message_send+=f"```{METAR_o}```\n----------\n"                                          #METAR original auch schicken
-        if append_TAF==True and TAF_o!="":                                                          #wenn TAF geschickt werden soll und gefunden wurde und kein Abo:
-            message_send+=f"```{TAF_o}```\n----------\n"                                            #TAF original auch schicken    
-        if station_elev!=None:                                                                      #wenn Flughafenhöhe vorhanden:
-            message_send+=f"```Elevation = {station_elev:,.0f}m ({station_elev/0.3048:,.0f}ft)```\n----------\n".replace(",", ".")  #Station_Elev zur Kontrolle auch schicken
-        
-        if METAR_o!="" or TAF_o!="":                                                                #wenn ein METAR oder TAF geschickt wurde: Hinweise
-            message_send+="Only use original METAR and TAF for flight operations!\nClouds are given as [coverage][altitude]|[height].\n"
-            if station_name=="":                                                                    #wenn METAR gefunden, aber Flughafenname nicht vorhanden: Warnmeldung
-                message_send+=f"Clouds are given as heights. Winds are assumed direct crosswind and will be marked at {KFS.fstr.notation_tech(WEATHER_MIN['CWC'], 2)}m/s or more. Variable winds are assumed direct tailwind and will be marked at {KFS.fstr.notation_tech(WEATHER_MIN['TWC'], 2)}m/s or more.\n"
-            elif station_elev==None:
-                message_send+=f"Clouds are given as heights.\n"
-        
-        try:
-            await message.channel.send(message_send)    #Nachricht an Discord abschicken
-        except discord.errors.DiscordServerError:
-            KFS.log.write("Sending message to discord failed.")
-        else:
+            #send messages
             if append_TAF==False:
-                KFS.log.write("\rMETAR, original METAR, and elevation sent.")
-            elif append_TAF==True and TAF_o!="":
-                KFS.log.write("\rMETAR, TAF, original METAR, original TAF, and elevation sent.")
-            elif append_TAF==True and TAF_o=="":
-                KFS.log.write("\rMETAR, original METAR, error message, and elevation sent.")
+                logging.info("Sending METAR and original METAR...")
+            elif append_TAF==True and TAF_o!=None:  #type:ignore
+                logging.info("Sending METAR, TAF, original METAR, and original TAF...")
+            elif append_TAF==True and TAF_o==None:  #type:ignore
+                logging.info("Sending METAR, original METAR, and error message...")
 
-        force_print=True    #bei nächstem Durchlauf wieder standardmäßig drucken erzwingen
+            message_send=""
+            if station["name"]==None:                                       #if station name not found:
+                message_send+=f"Could not find {station['ICAO']} in aerodrome database. No title, elevation, and runway directions available..\n----------\n"  #send error message
+            else:                                                           #if station name found:
+                message_send+=f"{station['name']}\n----------\n"            #send station name
+            if METAR_o==None:                                               #if METAR not found:
+                message_send+="There is no published METAR.\n----------\n"  #send error message
+            else:                                                           #if METAR found:
+                message_send+=f"```{METAR}```\n----------\n"                #send METAR
+            if append_TAF==True and TAF_o==None:                            #if TAF desired and not found: #type:ignore
+                message_send+="There is no pusblished TAF.\n----------\n"   #send error message
+            elif append_TAF==True and TAF_o!=None:                          #if TAF desired and found: #type:ignore
+                message_send+=f"```{TAF}```\n----------\n"                  #send TAF #type:ignore
+            if METAR_o!=None:                                               #if METAR found:
+                message_send+=f"```{METAR_o}```\n----------\n"              #send METAR original too
+            if append_TAF==True and TAF_o!=None:                            #if TAF desired and found: #type:ignore
+                message_send+=f"```{TAF_o}```\n----------\n"                #send TAF original too     #type:ignore
+            if station["elev"]!=None:                                      #if station elevation found:
+                message_send+=f"```Elevation = {KFS.fstr.notation_abs(station['elev'], 0, round_static=True)}m ({KFS.fstr.notation_abs(station['elev']/0.3048, 0, round_static=True)}ft)```\n----------\n".replace(",", ".")  #send station elevation
+            
+            if METAR_o!=None or TAF_o!=None:    #if a METAR of TAF sent: warnings #type:ignore
+                message_send+="Only use original METAR and TAF for flight operations!\n"
+                if station["name"]==None:       #if aerodrome not found in database
+                    message_send+=f"Clouds are given as heights. Winds are assumed direct crosswind and will be marked at {KFS.fstr.notation_tech(WEATHER_MIN['CWC'], 2)}m/s or more. Variable winds are assumed direct tailwind and will be marked at {KFS.fstr.notation_tech(WEATHER_MIN['TWC'], 2)}m/s or more.\n"
+                elif station["elev"]==None:     #if only elevation not found
+                    message_send+="Clouds are given as heights.\n"
+                else:                           #if everything found: default message
+                    message_send+="Clouds are given as \"{coverage}{altitude}|{height}\".\n"
+            
+            try:
+                await message.channel.send(message_send)    #send message to discord
+            except discord.errors.DiscordServerError:
+                logging.error("Sending message to discord failed.")
+                return
+            if append_TAF==False:
+                logging.info("\rSent METAR and original METAR.")
+            elif append_TAF==True and TAF_o!=None:
+                logging.info("\rSent METAR, TAF, original METAR, and original TAF.")
+            elif append_TAF==True and TAF_o==None:
+                logging.info("\rSent METAR, original METAR, and error message.")
+
         return
 
 
-    @discord.ext.tasks.loop(seconds=100)    #alle 100s auf Updates schauen
+    @discord.ext.tasks.loop(seconds=100)    #every 100s look for updates
     async def METAR_updated():
-        global airport_DB
+        global aerodrome_DB
         global country_DB
-        global DT_DB_last_updated
         global force_print
         global frequency_DB
-        global message_last
+        global message_previous
         global navaid_DB
         global RWY_DB
 
 
-        #Datenbanken aktualisieren
-        DT_now=dt.datetime.now(dt.timezone.utc)
-        if DT_DB_last_updated.day!=DT_now.day:  #wenn seit Aktualisierung letzter Tag geändert: Datenbanken aktualisieren
-            airport_DB  =init_DB("Airport",   airport_DB,   DT_now)
-            country_DB  =init_DB("Country",   country_DB,   DT_now)
-            frequency_DB=init_DB("Frequency", frequency_DB, DT_now)
-            navaid_DB   =init_DB("Navaid",    navaid_DB,    DT_now)
-            RWY_DB      =init_DB("Runway",    RWY_DB,       DT_now)
-            DT_DB_last_updated=DT_now           #Datenbanken jetzt zuletzt aktualisiert
+        #refresh databases
+        now_DT=dt.datetime.now(dt.timezone.utc)
+        aerodrome_DB=init_DB(DB_Type.aerodrome, aerodrome_DB, now_DT, DOWNLOAD_TIMEOUT)
+        country_DB  =init_DB(DB_Type.country,   country_DB,   now_DT, DOWNLOAD_TIMEOUT)
+        frequency_DB=init_DB(DB_Type.frequency, frequency_DB, now_DT, DOWNLOAD_TIMEOUT)
+        navaid_DB   =init_DB(DB_Type.navaid,    navaid_DB,    now_DT, DOWNLOAD_TIMEOUT)
+        RWY_DB      =init_DB(DB_Type.runway,    RWY_DB,       now_DT, DOWNLOAD_TIMEOUT)
         
 
-        if message_last==None:  #wenn seit Start noch keine Nachricht eingegangen: kein Abo möglich
+        if message_previous==None:  #if no message since startup: no subscription possible
             return
 
-        force_print=False               #Abo
-        await on_message(message_last)
+        force_print=False           #subscription
+        await on_message(message_previous)
         return
-    METAR_updated.start()
+    METAR_updated.start()   #start event
 
-    #Bot-Token initialisieren, nicht hardgecoded damit er nicht im Quelltext auf Github steht
-    with open("discord_bot_token.txt", "rt") as discord_bot_token_file:
-        discord_bot_token=discord_bot_token_file.read()
-    async with client:
-        await client.start(discord_bot_token)
+    discord_bot_token=KFS.config.load_config("discord_bot.token")   #load discord bot token
+    await discord_client.start(discord_bot_token)                   #start discord client now
 
 
-# METAR aktuell
+# METAR now
 # http://tgftp.nws.noaa.gov/data/observations/metar/stations/<station>.TXT
-# TAF aktuell
+# TAF now
 # https://tgftp.nws.noaa.gov/data/forecasts/taf/stations/<station>.TXT
 #
-# Beispiel
+# example
 # https://github.com/python-metar/python-metar
 #
-# METAR erklärt
+# METAR explained
 # https://mediawiki.ivao.aero/index.php?title=METAR_explanation
 #
-# Flughafendatenbank
-# https://raw.githubusercontent.com/mborsetti/airportsdata/main/airportsdata/airports.csv
+# databases
+# https://ourairports.com/data/

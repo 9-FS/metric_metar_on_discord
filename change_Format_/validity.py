@@ -1,38 +1,43 @@
-import datetime
-import re   #Regular Expressions
+import datetime as dt
+import re
 
 
-def change_format_validity(info, date):
-    if re.search("^[0-3][0-9][0-2][0-9]/[0-3][0-9][0-2][0-9]$", info)!=None:
-        DT_publishion=datetime.datetime(int(date[0:4]), int(date[5:7]), int(date[8:10]), int(date[11:13]), int(date[14:16]))    #Veröffentlichungszeitpunkt
+def change_format_validity(info: str, met_report_DT: dt.datetime) -> str|None:
+    re_match: re.Match|None
 
-        #Startzeitpunkt
-        DT_start=datetime.datetime(int(date[0:4]), int(date[5:7]), int(date[8:10]), 0, 0)   #Startdatum, initialisiert mit Veröffentlichungsdatum
-        while DT_start.strftime("%d")!=info[0:2]:                                           #solange Starttag nicht stimmt:
-            DT_start+=datetime.timedelta(days=1)                                            #Tag hinzufügen
-        DT_start+=datetime.timedelta(hours=int(info[2:4]))                                  #zu Startdatum Uhrzeit hinzufügen
 
-        #Endzeitpunkt
-        DT_end=DT_start                                     #Endzeitpunkt, initialsiert mit Startzeitpunkt
-        DT_end-=datetime.timedelta(hours=int(info[2:4]))    #Enddatum
-        while DT_end.strftime("%d")!=info[5:7]:             #solange Endtag nicht stimmt:
-            DT_end+=datetime.timedelta(days=1)              #Tag hinzufügen
-        DT_end+=datetime.timedelta(hours=int(info[7:9]))    #zu Enddatum Uhrzeit hinzufügen
+    #TAF validity
+    re_match=re.search("^(?P<start_day>[0-3][0-9])(?P<start_hour>[0-2][0-9])/(?P<end_day>[0-3][0-9])(?P<end_hour>[0-2][0-9])$", info)
+    if re_match!=None:
+        start_DT: dt.datetime
+        end_DT: dt.datetime
+        info_new: str
 
-        if DT_publishion.strftime("%Y-%m")==DT_start.strftime("%Y-%m"): #wenn Jahr und Monat gleich:
-            info_new=f"{DT_start.strftime('%dT%H')}/"                   #Endzeitpunkt nur Tag und Stunde
-        elif DT_publishion.strftime("%Y")==DT_start.strftime("%Y"):     #wenn Jahr gleich:
-            info_new=f"{DT_start.strftime('%Y-%m-%dT%H')}/"             #Endzeitpunkt nur Monat, Tag und Stunde
-        else:                                                           #wenn nichts gleich:
-            info_new=f"{DT_start.strftime('%Y-%m-%dT%H')}/"             #Endzeitpunkt voll mit Jahr, Monat, Tag und Stunde
+        start_DT=dt.datetime(met_report_DT.year, met_report_DT.month, met_report_DT.day, 0, 0, 0, 0, dt.timezone.utc)   #start datetime, initialised with met report date
+        while start_DT.strftime("%d")!=re_match.groupdict()["start_day"]:                                               #as long as days not matching:
+            start_DT+=dt.timedelta(days=1)                                                                              #start must be after met report datetime, increment day until same
+        start_DT+=dt.timedelta(hours=int(re_match.groupdict()["start_hour"]))                                           #correct day now, add time
 
-        if   DT_start.strftime("%Y-%m-%d")==DT_end.strftime("%Y-%m-%d"):    #wenn Jahr, Monat und Tag gleich:
-            info_new+=f"{DT_end.strftime('%H')}"                            #Endzeitpunkt nur Stunde
-        elif DT_start.strftime("%Y-%m")==DT_end.strftime("%Y-%m"):          #wenn Jahr und Monat gleich:
-            info_new+=f"{DT_end.strftime('%dT%H')}"                         #Endzeitpunkt nur Tag und Stunde
-        elif DT_start.strftime("%Y")==DT_end.strftime("%Y"):                #wenn Jahr gleich:
-            info_new+=f"{DT_end.strftime('%m-%dT%H:00')}"                   #Endzeitpunkt nur Monat, Tag und Uhrzeit
-        else:                                                               #wenn nichts gleich:
-            info_new+=f"{DT_end.strftime('%Y-%m-%dT%H')}"                   #Endzeitpunkt voll mit Jahr, Monat, Tag und Stunde
+        end_DT=dt.datetime(start_DT.year, start_DT.month, start_DT.day, 0, 0, 0, 0, dt.timezone.utc)    #end datetime, initialised with start date
+        while end_DT.strftime("%d")!=re_match.groupdict()["end_day"]:                                   #as long as days not matching:
+            end_DT+=dt.timedelta(days=1)                                                                #end must be after start datetime, increment day until same
+        end_DT+=dt.timedelta(hours=int(re_match.groupdict()["end_hour"]))                               #correct day now, add time
 
-        return " "+info_new
+
+        if   met_report_DT.strftime("%Y-%m")==start_DT.strftime("%Y-%m"):   #if year and month still same:
+            info_new=f"{start_DT.strftime('%dT%H')}/"                       #day, hour
+        elif met_report_DT.strftime("%Y")==start_DT.strftime("%Y"):         #if year still same:
+            info_new=f"{start_DT.strftime('%m-%dT%H')}/"                    #month, day, hour
+        else:                                                               #nothing same:
+            info_new=f"{start_DT.strftime('%Y-%m-%dT%H')}/"                 #full datetime
+
+        if   start_DT.strftime("%Y-%m-%d")==end_DT.strftime("%Y-%m-%d"):    #if date still same:
+            info_new+=f"{end_DT.strftime('%H')}"                            #hour
+        elif start_DT.strftime("%Y-%m")==end_DT.strftime("%Y-%m"):          #if year and month still same:
+            info_new+=f"{end_DT.strftime('%dT%H')}"                         #day, hour
+        elif start_DT.strftime("%Y")==end_DT.strftime("%Y"):                #if year still same:
+            info_new+=f"{end_DT.strftime('%m-%dT%H')}"                      #month, day, hour
+        else:                                                               #nothing same
+            info_new+=f"{end_DT.strftime('%Y-%m-%dT%H')}"                   #full datetime
+
+        return f" {info_new}"

@@ -1,42 +1,38 @@
-from change_Format_.HGT                  import change_Format_HGT
-from change_Format_.QNH                  import change_format_QNH
-from change_Format_.temp_dew             import change_format_temp_dew
-from change_Format_.USA_codes            import change_format_USA_codes
-from change_Format_.visibility_vertical  import change_format_VV
-from change_Format_.wind                 import change_format_wind
+import datetime as dt
+import pandas
+from change_format_.HGT                  import change_format_HGT
+from change_format_.QNH                  import change_format_QNH
+from change_format_.temp_dew             import change_format_temp_dew
+from change_format_.USA_codes            import change_format_USA_codes
+from change_format_.visibility_vertical  import change_format_VV
+from change_format_.wind                 import change_format_wind
 
 
-def change_Format_RMK(info_list, i, station, station_elev, date, RWY_DB):
-    if info_list[i]=="":    #wenn Info leer, kann vorkommen bei TAF weil mehrere Leerzeichen hintereinander
-        return ""           #String leer zurück
-
-
-    info_new=change_format_wind     (info_list[i], station, RWY_DB)         #Wind
+def change_format_RMK(info_list: list[str], i: int, station: dict, met_report_DT: dt.datetime, RWY_DB: pandas.DataFrame) -> str:
+    info_new=change_format_wind     (info_list[i], station, RWY_DB)         #wind
     if info_new!=None:
         return info_new
 
-    info_new=change_format_temp_dew (info_list[i])                          #Temperatur und Taupunkt
+    info_new=change_format_temp_dew (info_list[i])                          #temperature and dewpoint
     if info_new!=None:
         return info_new
 
-    info_new=change_format_QNH      (info_list[i])                          #QNH, als Zusatz in Einheit anderer schon gesehen (Bsp. RCTP)
+    info_new=change_format_QNH      (info_list[i])                          #QNH in additional unit (ex. RCTP)
     if info_new!=None:
         return info_new
 
-    info_new=change_Format_HGT      (info_list[i], station_elev)            #Höhe, Bsp Windänderungshöhe
+    info_new=change_format_HGT      (info_list[i], station)                 #height, example wind change altitude
     if info_new!=None:
         return info_new
 
-    #in RMK 4 Ziffern können unterschiedliche Sachen bedeuten: Uhrzeit, QNH, ... wird daher unverändert weitergeleitet
-    ###if re.search("^[0-2][0-9][0-5][0-9]$", Info)!=None:
-        ###return " "+Info
+    #in RMK 4 digits can mean different things: time, QNH... that's why forward unchanged
 
-    info_new=change_format_VV       (info_list[i])                          #Sicht vertikal
+    info_new=change_format_VV       (info_list[i])                          #visibility vertical
     if info_new!=None:
         return info_new
 
-    info_new=change_format_USA_codes(info_list[i], date, station, RWY_DB)   #USA Wetterstationcodes
+    info_new=change_format_USA_codes(info_list[i], met_report_DT, station, RWY_DB)   #USA weather station machine codes
     if info_new!=None:
         return info_new
 
-    return " "+info_list[i]  #wenn Format nicht gefunden: einfach weiterleiten
+    return f" {info_list[i]}"   #if format not found: just forward it

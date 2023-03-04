@@ -2,26 +2,32 @@ import re   #Regular Expressions
 from weather_minimums import WEATHER_MIN
 
 
-def change_format_weather(info_list, i):
-    if re.search("^([+-]|)([A-Z][A-Z]|)([A-Z][A-Z]|)[A-Z][A-Z]$", info_list[i])!=None:
-        bold=False
-        info_new=""
+def change_format_weather(info_list: list, i: int) -> str|None:
+    re_match: re.Match|None
 
-        if i==2:                    #wenn Gruppe 2: nicht Wetter, sondern Stationsname
-            return " "+info_list[i] #einfach durchleiten, nichts markieren (Bsp Flugplatz EDGS Siegerland würde ständig markiert werden wegen GS)
 
-        j=0
-        while j<len(info_list[i]):
-            if j==0 and re.search("^[+-]", info_list[i])!=None:     #wenn Intensitätsvorzeichen: überspringen
-                j+=1
-                continue
-            if "weather_forbidden" in WEATHER_MIN and re.search(WEATHER_MIN["weather_forbidden"], info_list[i][j:j+2])!=None:   #bei dem Wetter nich fliegen, Sicht, Vereisung, Stürme etc
+    #weather
+    re_match=re.search("^(?P<plus_minus>[+-]?)(?P<weather>([A-Z]{2})+)$", info_list[i])
+    if re_match!=None:
+        bold: bool
+        info_new: str
+        plus_minus: str=re_match.groupdict()["plus_minus"]
+        weather: str   =re_match.groupdict()["weather"]
+
+        if i==0:    #if aerodrome identifier: just forward, don't mark; for example EDGS would be marked all the time otherwise because of GS
+            return f" {info_list[i]}"
+
+
+        info_new=f"{plus_minus}{weather}"
+
+        for j in range(0, len(weather), 2):
+            if "weather_forbidden" in WEATHER_MIN and re.search(WEATHER_MIN["weather_forbidden"], weather[j:j+2])!=None:    #do not fly during this weather; visibility, icing, storms...
                 bold=True
                 break
-            j+=2
+        else:   #no problematic weather found
+            bold=False
 
-        info_new=info_list[i]
         if bold==True:
             info_new=f"**{info_new}**"
-        return " "+info_new
+        return f" {info_new}"
     

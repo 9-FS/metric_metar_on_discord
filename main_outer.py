@@ -1,13 +1,17 @@
-import asyncio
-import KFS.log
-import traceback    #Exceptionnachricht vollständig wenn Programm als .exe abschmiert
+import asyncio      #async
+import KFS.log      #setup logging
+import logging      #standard logging
+import traceback    #exception message full when program crashes as .exe
 from main import main
 
 
+KFS.log.setup_logging("", logging.INFO)
 try:
     asyncio.run(main())
 except:
-    KFS.log.write(traceback.format_exc())
+    logging.critical(traceback.format_exc())
     
-    print("\n\nPress enter to close program.")
+    print("\n\nPress enter to close program.", flush=True)
     input() #pause
+else:
+    print("\n", end="", flush=True)

@@ -1,9 +1,9 @@
-import pandas as pd     #Dataframes
-import KFS.fstr         #Notation technisch
-import KFS.log
+import pandas
+import KFS
 
 
-async def airport_info(station, station_name, station_elev, frequency_DB, navaid_DB, RWY_DB, message):
+async def aerodrome_info(station: dict, frequency_DB: pandas.DataFrame, navaid_DB: pandas.DataFrame, RWY_DB: pandas.DataFrame, message) -> None:
+    """
     freq=frequency_DB[frequency_DB["airport_ident"]==station].reset_index(drop=True)    #Frequenzen relevant
     freq_info=""                                                                        #Frequenzinformationen zu schicken
     message_send=""                                                                     #Nachricht final an Discord
@@ -135,3 +135,4 @@ async def airport_info(station, station_name, station_elev, frequency_DB, navaid
     await message.channel.send(message_send)    #Nachricht an Discord abschicken
     KFS.log.write("Runways, frequencies, navaids, and elevation sent.")
     return
+    """
