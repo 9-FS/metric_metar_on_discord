@@ -1,4 +1,5 @@
 *.bat
+*.config
 *.exe
 *.log
 *.pyc

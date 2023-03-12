@@ -1,3 +1,5 @@
+import aiohttp.client_exceptions    #for exception catching
+import asyncio
 import discord, discord.ext.tasks   #discord, discord event scheduler
 import datetime as dt               #datetime
 import KFS
@@ -17,13 +19,12 @@ from weather_minimums  import WEATHER_MIN       #weather minimums for marking
 aerodrome_DB: pandas.DataFrame=pandas.DataFrame()   #aerodrome database
 country_DB: pandas.DataFrame=pandas.DataFrame()     #country database for country names
 discord_bot_token: str|None                         #discord bot token
-DISCORD_CHANNEL: str="botspam"                      #bot channel
-DISCORD_CHANNEL_ID: int=839081784008245248          #bot channel ID
+discord_channel_ID: int                             #bot channel ID
 DOWNLOAD_TIMEOUT: int=50                            #METAR and TAF download timeouts [s]
 COMMANDS_ALLOWED: tuple=(                           #commands allowed
     "^(?P<station_ICAO>[0-9A-Z]{4})$",
     "^(?P<station_ICAO>[0-9A-Z]{4}) TAF$",
-    #"^(?P<station_ICAO>[0-9A-Z]{4}) INFO$"
+    #"^(?P<station_ICAO>[0-9A-Z]{4}) INFO$" #TODO
 )
 force_print: bool=True                                  #force sending to discord (after user input request) or not (subscription)
 frequency_DB: pandas.DataFrame=pandas.DataFrame()       #frequency database for information command
@@ -39,15 +40,18 @@ TAF_update_finished: bool                               #has program in subscrip
 
 @KFS.log.timeit_async
 async def main() -> None:
-    intents=discord.Intents.default()               #standard permissions
-    intents.message_content=True                    #in addition with message contents
-    discord_client=discord.Client(intents=intents)  #create client instance
+    intents: discord.Intents=discord.Intents.default()              #standard permissions
+    intents.message_content=True                                    #in addition with message contents
+    discord_client: discord.Client=discord.Client(intents=intents)  #create client instance
+
+    discord_bot_token=KFS.config.load_config("discord_bot.token")               #load discord bot token
+    discord_channel_ID=int(KFS.config.load_config("discord_channel_ID.config")) #load bot channel ID
 
 
     @discord_client.event
     async def on_ready():
         """
-        Executed as soon as bot started up and is ready. Initialised databases and then informs the user that it is ready to use.
+        Executed as soon as bot started up and is ready. Also executes after bot reconnects to the internet and is ready again. Initialised databases.
         """
 
         global aerodrome_DB
@@ -67,8 +71,8 @@ async def main() -> None:
         navaid_DB   =init_DB(DB_Type.navaid,    navaid_DB,    now_DT, DOWNLOAD_TIMEOUT)
         RWY_DB      =init_DB(DB_Type.runway,    RWY_DB,       now_DT, DOWNLOAD_TIMEOUT)
 
-        logging.info("Discord client started.")
-        await discord_client.get_channel(DISCORD_CHANNEL_ID).send("Discord client started.") #type:ignore
+        logging.info("Started discord client.")
+        #await discord_client.get_channel(DISCORD_CHANNEL_ID).send("Started discord client.") #tell user bot is ready to use now #type:ignore
         return
 
     @discord_client.event
@@ -80,7 +84,7 @@ async def main() -> None:
 
         - \"{ICAO code} TAF\" requests the current METAR and TAF and changes the subscribed station.
 
-        - \"{ICAO code} INFO\" requests information and does not change the subscribed station.
+        - \"{ICAO code} INFO\" requests information and does not change the subscribed station. TODO: CURRENTLY UNUSABLE.
         """
 
         global force_print
@@ -109,7 +113,7 @@ async def main() -> None:
                 global force_print
                 force_print=True
         with ContextManager():  #upon exit, force print by default
-            if message.author==discord_client.user or str(message.channel)!=DISCORD_CHANNEL:    #if message from bot itself or outside botspam channel: do nothing
+            if message.author==discord_client.user or message.channel.id!=discord_channel_ID:   #if message from bot itself or outside botspam channel: do nothing
                 return
             message.content=message.content.upper()
 
@@ -335,8 +339,13 @@ async def main() -> None:
         return
     METAR_updated.start()   #start event
 
-    discord_bot_token=KFS.config.load_config("discord_bot.token")   #load discord bot token
-    await discord_client.start(discord_bot_token)                   #start discord client now
+    while True:
+        logging.info("Starting discord client...")
+        try:
+            await discord_client.start(discord_bot_token)               #start discord client now
+        except aiohttp.client_exceptions.ClientConnectorError:          #if temporary internet failure: retry connection
+            logging.error("Starting discord client failed, because client could not connect. Retrying in 10s...")
+            await asyncio.sleep(10)
 
 
 # METAR now
