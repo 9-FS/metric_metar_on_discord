@@ -187,10 +187,10 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: dict
         info_new: str=""
         temperature_type: str=re_match.groupdict()["temperature_type"]
 
-        if   temperature_type=="1":
-            temperature_type+="TX6h"
+        if   temperature_type=="1": #replace temperature type code with readable abbreviation
+            temperature_type="TX6h"
         elif temperature_type=="2":
-            temperature_type+="TN6h"
+            temperature_type="TN6h"
         else:
             logging.critical(f"Temperature type shoud be in [1; 2], but it is {temperature_type}.")
             raise RuntimeError(f"Error in {change_format_USA_codes.__name__}{inspect.signature(change_format_USA_codes)}: Temperature type shoud be in [1; 2], but it is {temperature_type}.")
