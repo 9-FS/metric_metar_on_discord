@@ -4,7 +4,7 @@
 *.log
 *.pyc
 *.token
-test.py
-/__pycache__/
-/Database/
-/Log/
+/src/__pycache__/
+/src/Database/
+/src/Log/
+/src/test.py
