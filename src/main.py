@@ -353,9 +353,6 @@ async def main() -> None:
 # TAF now
 # https://tgftp.nws.noaa.gov/data/forecasts/taf/stations/<station>.TXT
 #
-# example
-# https://github.com/python-metar/python-metar
-#
 # METAR explained
 # https://mediawiki.ivao.aero/index.php?title=METAR_explanation
 #
