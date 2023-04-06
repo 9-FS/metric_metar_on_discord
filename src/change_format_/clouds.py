@@ -8,7 +8,7 @@ def change_format_clouds(info: str, station: dict) -> str|None:
 
 
     #clouds
-    re_match=re.search("^(?P<cloud_coverage>FEW|SCT|BKN|OVC)(?P<cloud_HGT>[0-9]{3})(?P<cloud_type>([A-Z])*?)?$", info)
+    re_match=re.search("^(?P<cloud_coverage>FEW|SCT|BKN|OVC)(?P<cloud_HGT>[0-9]{3})(?P<cloud_type>([A-Z/])*?)?$", info)
     if re_match!=None:
         cloud_ALT: float                                                                            #altitude [m]
         cloud_coverage: str=re_match.groupdict()["cloud_coverage"]                                  #cloud coverage [1/8]
