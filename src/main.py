@@ -2,7 +2,7 @@ import aiohttp.client_exceptions    #for exception catching
 import asyncio
 import discord, discord.ext.tasks   #discord, discord event scheduler
 import datetime as dt               #datetime
-import KFS
+import KFS.config, KFS.convert_to_SI, KFS.fstr, KFS.log
 import logging                      #standard logging
 import pandas                       #DataFrame
 import re                           #regular expressions

@@ -1,5 +1,5 @@
 import inspect
-import KFS
+import KFS.convert_to_SI, KFS.fstr
 import logging
 import re
 from weather_minimums import WEATHER_MIN

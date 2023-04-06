@@ -1,5 +1,5 @@
 import re   #Regular Expressions
-import KFS
+import KFS.convert_to_SI, KFS.fstr
 from weather_minimums import WEATHER_MIN
 
 

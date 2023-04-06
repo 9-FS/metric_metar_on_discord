@@ -1,5 +1,5 @@
 import inspect
-import KFS
+import KFS.convert_to_SI, KFS.fstr
 import logging
 import numpy    #for crosswind component, numpy unctions because of DataFrames input
 import pandas

@@ -1,5 +1,5 @@
 import re
-import KFS
+import KFS.fstr
 
 
 def change_format_HGT(info: str, station: dict) -> str|None:

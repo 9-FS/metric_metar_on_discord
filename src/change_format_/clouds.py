@@ -1,4 +1,4 @@
-import KFS
+import KFS.fstr
 import re
 from weather_minimums import WEATHER_MIN
 

@@ -1,5 +1,5 @@
 import datetime as dt
-import KFS
+import KFS.fstr
 import re
 
 
