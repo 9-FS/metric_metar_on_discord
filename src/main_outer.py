@@ -1,3 +1,4 @@
+#Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import asyncio      #async
 import KFS.log      #setup logging
 import logging      #standard logging

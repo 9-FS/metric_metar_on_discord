@@ -1,4 +1,5 @@
-import KFS.fstr
+#Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
+import KFS.fstr, KFS.convert_to_SI
 import re
 from weather_minimums import WEATHER_MIN
 

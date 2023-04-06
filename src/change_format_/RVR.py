@@ -1,3 +1,4 @@
+#Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import re   #Regular Expressions
 import KFS.convert_to_SI, KFS.fstr
 from weather_minimums import WEATHER_MIN

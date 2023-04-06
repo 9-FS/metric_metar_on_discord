@@ -1,6 +1,6 @@
 ---
 Topic: "Metric METAR for Discord"
-Author: "9FS"
+Author: "구FS"
 ---
 <link href="md_style.css" rel="stylesheet"></link>
 <div id="global">
@@ -10,13 +10,13 @@ Author: "9FS"
 <br>
 
 - [1. General](#1-general)
-    - [1.1. Overview](#11-overview)
-    - [1.2. Examples](#12-examples)
-        - [1.2.1. Example 1: METAR](#121-example-1-metar)
-        - [1.2.2. Example 2: TAF](#122-example-2-taf)
-        - [1.2.3. Example 3: USA](#123-example-3-usa)
-        - [1.2.4. Example 4: Russia](#124-example-4-russia)
-    - [1.3. Core Advantages](#13-core-advantages)
+  - [1.1. Overview](#11-overview)
+  - [1.2. Examples](#12-examples)
+    - [1.2.1. Example 1: METAR](#121-example-1-metar)
+    - [1.2.2. Example 2: TAF](#122-example-2-taf)
+    - [1.2.3. Example 3: USA](#123-example-3-usa)
+    - [1.2.4. Example 4: Russia](#124-example-4-russia)
+  - [1.3. Core Advantages](#13-core-advantages)
 - [2. How to Install](#2-how-to-install)
 - [3. How to Use](#3-how-to-use)
 - [4. Possible Future Features](#4-possible-future-features)

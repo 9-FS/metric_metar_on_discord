@@ -1,6 +1,5 @@
-import inspect
+#Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import KFS.convert_to_SI, KFS.fstr
-import logging
 import numpy    #for crosswind component, numpy unctions because of DataFrames input
 import pandas
 import re

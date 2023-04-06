@@ -1,3 +1,4 @@
+#Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import aiohttp.client_exceptions    #for exception catching
 import asyncio
 import discord, discord.ext.tasks   #discord, discord event scheduler
@@ -7,7 +8,6 @@ import logging                      #standard logging
 import pandas                       #DataFrame
 import re                           #regular expressions
 import requests                     #HTTP exceptions
-from aerodrome_info    import aerodrome_info    #aerodrome information command
 from DB_Type           import DB_Type           #database type for init_DB
 from Doc_Type          import Doc_Type          #process METAR or TAF?
 from init_DB           import init_DB           #download database or load from file
@@ -170,9 +170,9 @@ async def main() -> None:
                     logging.info(f"Elevation: {KFS.fstr.notation_abs(station['elev'], 0, round_static=True)}m")
 
             #information command
-            if INFO_command==True:  #if information command: execute that, then return without downloading METAR, TAF etc.
-                await aerodrome_info(station, frequency_DB, navaid_DB, RWY_DB, message)
-                return
+            # if INFO_command==True:  #if information command: execute that, then return without downloading METAR, TAF etc.
+            #     await aerodrome_info(station, frequency_DB, navaid_DB, RWY_DB, message)
+            #     return
             
 
             #download and convert METAR and TAF

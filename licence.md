@@ -1,6 +1,6 @@
 ---
 Topic: "Metric METAR for Discord"
-Author: "9FS"
+Author: "구FS"
 ---
 <link href="md_style.css" rel="stylesheet"></link>
 <div id="global">
@@ -10,7 +10,7 @@ Author: "9FS"
 <br>
 
 This repository is dual-licenced under:
-- a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/) for non-commerical use and
+- [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/) for non-commerical use and
 - a commercial licence for commercial use. Contact me directly if there should be any interest.
 
 <div style="page-break-after: always;"></div>
