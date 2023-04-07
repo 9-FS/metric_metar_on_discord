@@ -3,7 +3,6 @@
 *.log
 *.pyc
 *.token
-.vscode
 /src/__pycache__/
 /src/Database/
 /src/Log/

@@ -41,7 +41,7 @@ async def main() -> None:
     intents: discord.Intents                #client permissions
     UPDATE_FREQUENCY: float=10e-3           #update subscription with 10mHz (every 100s)
 
-    discord_bot_channel_names=[bot_channel_name for bot_channel_name in KFS.config.load_config("discord_bot_channel_names.config").split("\n") if bot_channel_name!=""] #load bot channel names, remove empty lines
+    discord_bot_channel_names=[bot_channel_name for bot_channel_name in KFS.config.load_config("discord_bot_channel_names.config", "bots\nbotspam\nmetar").split("\n") if bot_channel_name!=""] #load bot channel names, remove empty lines
     discord_bot_token=KFS.config.load_config("discord_bot.token")   #load discord bot token
 
     intents=discord.Intents.default()              #standard permissions
