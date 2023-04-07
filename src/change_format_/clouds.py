@@ -1,10 +1,11 @@
 #Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import KFS.fstr, KFS.convert_to_SI
 import re
+from Station          import Station
 from weather_minimums import WEATHER_MIN
 
 
-def change_format_clouds(info: str, station: dict) -> str|None:
+def change_format_clouds(info: str, station: Station) -> str|None:
     re_match: re.Match|None
 
 
@@ -17,10 +18,10 @@ def change_format_clouds(info: str, station: dict) -> str|None:
         cloud_type: str=re_match.groupdict()["cloud_type"]                                          #append cloud type, usually TCU or CB
         info_new: str
 
-        if station["elev"]==None:               #if aerodrome elevation unknown:
+        if station.elev==None:               #if aerodrome elevation unknown:
             cloud_ALT=cloud_HGT                 #assume elevation=0m
         else:                                   #if aerodrome elevation known:
-            cloud_ALT=cloud_HGT+station["elev"] #calculate altitude normally
+            cloud_ALT=cloud_HGT+station.elev #calculate altitude normally
 
 
         info_new=cloud_coverage

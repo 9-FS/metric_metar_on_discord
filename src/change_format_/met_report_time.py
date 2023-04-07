@@ -2,9 +2,10 @@
 import datetime as dt
 import KFS.fstr
 import re
+from Server import Server
 
 
-def change_format_met_report_DT(info: str, met_report_DT: dt.datetime, now_DT: dt.datetime, force_print: bool) -> str|None:
+def change_format_met_report_DT(info: str, met_report_DT: dt.datetime, now_DT: dt.datetime, server: Server) -> str|None:
     re_match: re.Match|None
     
     
@@ -23,7 +24,7 @@ def change_format_met_report_DT(info: str, met_report_DT: dt.datetime, now_DT: d
 
         info_new=f"{event_DT.strftime('%Y-%m-%dT%H:%M')}"
 
-        if force_print==True:                    #if force print because no subscription:
+        if server.force_print==True:             #if force print because no subscription:
             timespan_published=now_DT-event_DT   #append timespan published
             info_new+=f" ({KFS.fstr.notation_tech(timespan_published.total_seconds(), 2)}s ago)"
 

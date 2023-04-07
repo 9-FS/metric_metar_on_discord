@@ -17,9 +17,10 @@ Author: "구FS"
     - [1.2.3. Example 3: USA](#123-example-3-usa)
     - [1.2.4. Example 4: Russia](#124-example-4-russia)
   - [1.3. Core Advantages](#13-core-advantages)
-- [2. How to Install](#2-how-to-install)
-- [3. How to Use](#3-how-to-use)
-- [4. Possible Future Features](#4-possible-future-features)
+- [2. How to Install by Inviting My Bot User (recommended)](#2-how-to-install-by-inviting-my-bot-user-recommended)
+- [3. How to Install by Setting Up Your Own Bot](#3-how-to-install-by-setting-up-your-own-bot)
+- [4. How to Use](#4-how-to-use)
+- [5. Possible Future Features](#5-possible-future-features)
 
 <div style="page-break-after: always;"></div>
 
@@ -121,8 +122,21 @@ Note the following differences:
 
 <div style="page-break-after: always;"></div>
 
-## 2. How to Install
+## 2. How to Install by Inviting My Bot User (recommended)
 
+This method is recommended if you just want to use the bot out of the box and set and forget it. I have it running 24/7, there should be no problems in availability. Updates are also automatically applied as soon as I deploy them on my system.
+
+1. Invite my bot user to your server by clicking [this link](https://discordapp.com/oauth2/authorize?&client_id=935809227660857375&scope=bot).
+1. Make sure to have a text channel named `bots`, `botspam`, or `metar` on your server. **The bot will only react in these specific channels.**  
+
+If you need another channel name the bot reacts to, either contact me or follow the guidline in [chapter 3.](#3-how-to-install-by-setting-up-your-own-bot) to set up your own bot instance.  
+It is recommended to only have 1 of the beforementioned channels on your server.
+
+## 3. How to Install by Setting Up Your Own Bot
+
+This method is recommended if you want to have full control about the bot's behaviour and maybe change some things for yourself here and there.
+
+1. Download the source code or download a release `Metric METAR for Discord.exe`.
 1. Copy your discord bot token into `discord_bot.token`.
     1. Create a discord application [here](https://discord.com/developers/applications).
     1. Create your bot.
@@ -130,15 +144,10 @@ Note the following differences:
     1. Copy your token into `discord_bot.token`.
 
    If you don't know how to do these steps, I recommend [this tutorial](https://www.writebots.com/discord-bot-token/).
-1. Copy your discord bot channel ID into `discord_channel_ID.config`.
-    1. Right-click on your channel.
-    1. "Copy Link"
-    1. Use the number after the last slash.
+1. Copy your discord bot channel name into `discord_bot_channel_names.config`.
+1. Execute `main_outer.py` with python or execute the compiled `Metric METAR for Discord.exe`.
 
-    Alternatively, you can also enable "Developer Mode" and "Copy Channel ID" directly.
-1. Execute `main_outer.py` with python or execute the compiled `Discord METAR.exe`.
-
-## 3. How to Use
+## 4. How to Use
 
 Once set up, using the bot is dead-easy. Write one of the following commands into the designated bot channel:
 - current METAR: `{ICAO code}`  
@@ -146,7 +155,9 @@ Once set up, using the bot is dead-easy. Write one of the following commands int
 - current METAR and TAF: `{ICAO code} TAF`  
   Example: `EDDF TAF`
 
-## 4. Possible Future Features
+<div style="page-break-after: always;"></div>
+
+## 5. Possible Future Features
 
 These are the features I am thinking about implementing in the future. Their stages vary widely from "hmm might be nice to have that" to "I have it almost done, but there is this 1 problem I can't solve.". So don't get your hopes up too high, but I'm very much open for feature requests and discussions.
 

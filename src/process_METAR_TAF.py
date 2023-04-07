@@ -8,9 +8,11 @@ import requests
 from change_format     import change_format     #change information format
 from change_format_RMK import change_format_RMK #in remark section change information format
 from Doc_Type          import Doc_Type          #processing METAR or TAF?
+from Server            import Server
+from Station           import Station
 
 
-def process_METAR_TAF(doc_type: Doc_Type, station: dict, RWY_DB: pandas.DataFrame, now_DT: dt.datetime, force_print: bool, DOWNLOAD_TIMEOUT: int) -> tuple[str|None, str|None]:
+def process_METAR_TAF(doc_type: Doc_Type, station: Station, RWY_DB: pandas.DataFrame, now_DT: dt.datetime, server: Server, DOWNLOAD_TIMEOUT: int) -> tuple[str|None, str|None]:
     """
     Processes whole METAR or TAF, from downloading, cleaning up, looking whether it is expired or not, changing format, to returning in both original format and my format.
     """
@@ -27,15 +29,15 @@ def process_METAR_TAF(doc_type: Doc_Type, station: dict, RWY_DB: pandas.DataFram
     #download METAR or TAF
     logging.info(f"Downloading {doc_type.name}...")
     if   doc_type==Doc_Type.METAR:
-        METAR_TAF_o=requests.get(f"http://tgftp.nws.noaa.gov/data/observations/metar/stations/{station['ICAO']}.TXT", timeout=DOWNLOAD_TIMEOUT) #download METAR or TAF
+        METAR_TAF_o=requests.get(f"http://tgftp.nws.noaa.gov/data/observations/metar/stations/{station.ICAO}.TXT", timeout=DOWNLOAD_TIMEOUT) #download METAR or TAF
     elif doc_type==Doc_Type.TAF:
-        METAR_TAF_o=requests.get(f"http://tgftp.nws.noaa.gov/data/forecasts/taf/stations/{station['ICAO']}.TXT",      timeout=DOWNLOAD_TIMEOUT) #download METAR or TAF
+        METAR_TAF_o=requests.get(f"http://tgftp.nws.noaa.gov/data/forecasts/taf/stations/{station.ICAO}.TXT",      timeout=DOWNLOAD_TIMEOUT) #download METAR or TAF
     else:
         logging.critical(f"Document type ({doc_type}) is neither {Doc_Type.METAR} nor {Doc_Type.TAF}.")
         raise RuntimeError(f"Error in {process_METAR_TAF.__name__}{inspect.signature(process_METAR_TAF)}: Document type ({doc_type}) is neither {Doc_Type.METAR} nor {Doc_Type.TAF}.")
     
     if METAR_TAF_o.status_code==404:    #if NOAA has no METAR or TAF page: station has no METAR or TAF
-        logging.error(f"{station['ICAO']} does not publish any {doc_type.name}.")
+        logging.error(f"{station.ICAO} does not publish any {doc_type.name}.")
         return None, None
     logging.info(f"\rDownloaded {doc_type.name}.")
 
@@ -84,7 +86,7 @@ def process_METAR_TAF(doc_type: Doc_Type, station: dict, RWY_DB: pandas.DataFram
         if RMK_section==True:                                                                               #if in remark section:
             info_new=change_format_RMK(METAR_TAF_o_list, i, station, met_report_DT, RWY_DB)                 #info new to append to METAR or TAF, change_format_RMK(...) adds separating chars as needed
         else:
-            info_new=change_format    (METAR_TAF_o_list, i, station, met_report_DT, now_DT, RWY_DB, force_print)    #info new to append to METAR or TAF, change_format(...) adds separating chars as needed
+            info_new=change_format    (METAR_TAF_o_list, i, station, met_report_DT, now_DT, RWY_DB, server) #info new to append to METAR or TAF, change_format(...) adds separating chars as needed
 
         if re.search("^(RMK|FIRST|LAST)$", info_new.strip())!=None: #if info new RMK marker or RMK marker indirectly:
             RMK_section=True                                        #RMK section following

@@ -6,10 +6,11 @@ import logging
 import numpy        #for crosswind component, numpy unctions because of DataFrames input
 import pandas
 import re
+from Station          import Station
 from weather_minimums import WEATHER_MIN
 
 
-def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: dict, RWY_DB: pandas.DataFrame) -> str|None:
+def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: Station, RWY_DB: pandas.DataFrame) -> str|None:
     re_match: re.Match|None
 
     WMO_CLOUD_TYPE_LOW={
@@ -62,7 +63,7 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: dict
         CWC: list=[]                                                            #across all runways, crosswind component
         event_DT: dt.datetime
         info_new: str
-        RWY: pandas.DataFrame=RWY_DB[RWY_DB["airport_ident"]==station["ICAO"]]  #in aerodrome all runways
+        RWY: pandas.DataFrame=RWY_DB[RWY_DB["airport_ident"]==station.ICAO]  #in aerodrome all runways
         wind_direction: int=int(re_match.groupdict()["wind_direction"])%360     #keep in [0; 360[
         wind_speed: float=float(re_match.groupdict()["wind_speed"])*KFS.convert_to_SI.speed["kt"]
 

@@ -15,12 +15,14 @@ from change_format_.visibility           import change_format_vis
 from change_format_.visibility_vertical  import change_format_VV
 from change_format_.weather              import change_format_weather
 from change_format_.wind                 import change_format_wind
+from Server                              import Server
+from Station                             import Station
 
 
-def change_format(info_list: list[str], i: int, station: dict, met_report_DT: dt.datetime, now_DT: dt.datetime, RWY_DB: pandas.DataFrame, force_print: bool) -> str:
+def change_format(info_list: list[str], i: int, station: Station, met_report_DT: dt.datetime, now_DT: dt.datetime, RWY_DB: pandas.DataFrame, server: Server) -> str:
     #just forward station ICAO
 
-    info_new=change_format_met_report_DT(info_list[i], met_report_DT, now_DT, force_print)  #met report time
+    info_new=change_format_met_report_DT(info_list[i], met_report_DT, now_DT, server)  #met report time
     if info_new!=None:
         return info_new
 

@@ -7,9 +7,10 @@ from change_format_.temp_dew             import change_format_temp_dew
 from change_format_.USA_codes            import change_format_USA_codes
 from change_format_.visibility_vertical  import change_format_VV
 from change_format_.wind                 import change_format_wind
+from Station                             import Station
 
 
-def change_format_RMK(info_list: list[str], i: int, station: dict, met_report_DT: dt.datetime, RWY_DB: pandas.DataFrame) -> str:
+def change_format_RMK(info_list: list[str], i: int, station: Station, met_report_DT: dt.datetime, RWY_DB: pandas.DataFrame) -> str:
     info_new=change_format_wind     (info_list[i], station, RWY_DB)         #wind
     if info_new!=None:
         return info_new

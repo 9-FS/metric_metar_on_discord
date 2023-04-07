@@ -3,10 +3,11 @@ import KFS.convert_to_SI, KFS.fstr
 import numpy    #for crosswind component, numpy unctions because of DataFrames input
 import pandas
 import re
+from Station          import Station
 from weather_minimums import WEATHER_MIN
 
 
-def change_format_wind(info: str, station: dict, RWY_DB: pandas.DataFrame) -> str|None:
+def change_format_wind(info: str, station: Station, RWY_DB: pandas.DataFrame) -> str|None:
     re_match: re.Match|None
 
 
@@ -45,7 +46,7 @@ def change_format_wind(info: str, station: dict, RWY_DB: pandas.DataFrame) -> st
         bold: bool
         CWC: list=[]                                                            #across all runways, crosswind component
         info_new: str
-        RWY: pandas.DataFrame=RWY_DB[RWY_DB["airport_ident"]==station["ICAO"]]  #in aerodrome all runways
+        RWY: pandas.DataFrame=RWY_DB[RWY_DB["airport_ident"]==station.ICAO]  #in aerodrome all runways
         wind_direction: int=int(re_match.groupdict()["wind_direction"])%360     #keep in [0; 360[
         wind_speed: float=float(re_match.groupdict()["wind_speed"])
         wind_speed_gust: float                                                  #wind speed gust, if no given equal to normal wind speed

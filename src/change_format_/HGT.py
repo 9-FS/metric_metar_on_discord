@@ -1,9 +1,10 @@
 #Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import re
 import KFS.fstr, KFS.convert_to_SI
+from Station import Station
 
 
-def change_format_HGT(info: str, station: dict) -> str|None:
+def change_format_HGT(info: str, station: Station) -> str|None:
     re_match: re.Match|None
 
     
