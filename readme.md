@@ -2,7 +2,7 @@
 Topic: "Metric METAR for Discord"
 Author: "구FS"
 ---
-<link href="md_style.css" rel="stylesheet"></link>
+<link href="./src/KFS/md_style.css" rel="stylesheet"></link>
 <div id="global">
 
 # <p style="text-align: center">Discord METAR Bot</p>
@@ -37,7 +37,7 @@ Important: While the code has been proven reliable over 1 year of daily private 
 Once a station is requested, 2 things happen:
 
 1. The current METAR and, if requested, TAF are provided. Only these reports write how long ago they have been published.
-1. The station is registered as the currently subscribed station. This means as soon as this station publishes a new METAR and, if requested, a new TAF, it will be automatically provided. This is a convenience functionality and the reason why using this bot is only recommended in a designated bot spam channel whose ID is specified in `discord_channel_ID.config`.
+1. The station is registered as the currently subscribed station. This means as soon as this station publishes a new METAR and, if requested, a new TAF, it will be automatically provided. This is a convenience functionality and the reason why using this bot is only recommended in a designated bot channel whose name is specified in `discord_bot_channel_names.config`. Channels with the name `bots`, `botspam`, and `metar` will be recognised by default.
 
 ### 1.2. Examples
 
@@ -129,7 +129,7 @@ This method is recommended if you just want to use the bot out of the box and se
 1. Invite my bot user to your server by clicking [this link](https://discordapp.com/oauth2/authorize?&client_id=935809227660857375&scope=bot).
 1. Make sure to have a text channel named `bots`, `botspam`, or `metar` on your server. **The bot will only react in these specific channels.**  
 
-If you need another channel name the bot reacts to, either contact me or follow the guidline in [chapter 3.](#3-how-to-install-by-setting-up-your-own-bot) to set up your own bot instance.  
+If you need another channel name the bot reacts to, either contact me or follow the guideline in [chapter 3.](#3-how-to-install-by-setting-up-your-own-bot) to set up your own bot instance.  
 It is recommended to only have 1 of the beforementioned channels on your server.
 
 ## 3. How to Install by Setting Up Your Own Bot
