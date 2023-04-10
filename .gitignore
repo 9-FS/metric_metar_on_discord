@@ -1,9 +1,9 @@
 *.bat
+*.csv
 *.exe
 *.log
 *.pyc
 *.token
-/src/__pycache__/
-/src/Database/
-/src/Log/
+/Database/
+/Log/
 /src/test.py
