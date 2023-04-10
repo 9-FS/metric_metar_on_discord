@@ -152,7 +152,7 @@ async def main() -> None:
                 logging.warning(f"\rCould not find {station.ICAO} in aerodrome database. No title, elevation, and runway directions available.")
                 station.elev=None
                 station.name=None
-            else:   #if aerodrome found in database:
+            else:                       #if aerodrome found in database:
                 logging.info(f"\rFound {station.ICAO} in aerodrome database.")
                 country=country_DB[country_DB["code"]==aerodrome.at[0, "iso_country"]]  #country desired
                 country=country.reset_index(drop=True)
@@ -208,91 +208,91 @@ async def main() -> None:
             if server.force_print==True:                   #if force printing: no subscription
                 server.message_previous=message            #refresh message previous
                 server.METAR_o_previous=METAR_o            #refresh METAR original previous
-                server.TAF_o_previous=TAF_o                #refresh TAF orginal previous #type:ignore
+                server.TAF_o_previous=TAF_o                #refresh TAF orginal previous
                 server.METAR_update_finished=False         #reset already waited for METAR
                 server.TAF_update_finished=False           #reset already waited for TAF
             
-            elif append_TAF==False:                                                 #subscription; if TAF undesired: disregard TAF
-                if server.METAR_o_previous==METAR_o:                                       #if METAR original same as previous one: subscription, don't print
+            elif append_TAF==False:                                                             #subscription; if TAF undesired: disregard TAF
+                if server.METAR_o_previous==METAR_o:                                            #if METAR original same as previous one: subscription, don't print
                     logging.info("Original METAR has not been changed. Not sending anything.")
                     return
-                elif server.METAR_o_previous!=METAR_o and server.METAR_update_finished==False:    #if METAR original new different, but not waited yet: subscription, wait 1 round until source website refreshed METAR completely
+                elif server.METAR_o_previous!=METAR_o and server.METAR_update_finished==False:  #if METAR original new different, but not waited yet: subscription, wait 1 round until source website refreshed METAR completely
                     logging.info("Original METAR has changed, but update process may not have been finished yet. Not sending anything yet.")
                     server.METAR_update_finished=True   
                     return
-                elif server.METAR_o_previous!=METAR_o and server.METAR_update_finished==True:     #if METAR original new different and waited already: subscription, source website refreshed METAR completely, now send METAR
+                elif server.METAR_o_previous!=METAR_o and server.METAR_update_finished==True:   #if METAR original new different and waited already: subscription, source website refreshed METAR completely, now send METAR
                     logging.info("Original METAR has changed and update process should have been finished.")
-                    server.METAR_o_previous=METAR_o                                        #refresh METAR original previous
-                    server.METAR_update_finished=False                                     #reset already waited for METAR
+                    server.METAR_o_previous=METAR_o                                             #refresh METAR original previous
+                    server.METAR_update_finished=False                                          #reset already waited for METAR
             
-            elif append_TAF==True:                                                  #subscription; if TAF desiredt: regard TAF
-                if server.METAR_o_previous==METAR_o and server.TAF_o_previous==TAF_o:             #if METAR original and TAF original same as previous one: subscription, don't print #type:ignore
+            elif append_TAF==True:                                                              #subscription; if TAF desiredt: regard TAF
+                if server.METAR_o_previous==METAR_o and server.TAF_o_previous==TAF_o:           #if METAR original and TAF original same as previous one: subscription, don't print
                     logging.info("Original METAR and TAF have not been changed. Not sending anything.")
                     return
-                elif(server.METAR_o_previous!=METAR_o and server.TAF_o_previous!=TAF_o            #if METAR original new and TAF original new different, but not waited yet: subscription, wait 1 round until source website refreshed METAR and TAF completely #type:ignore
+                elif(server.METAR_o_previous!=METAR_o and server.TAF_o_previous!=TAF_o          #if METAR original new and TAF original new different, but not waited yet: subscription, wait 1 round until source website refreshed METAR and TAF completely
                     and server.METAR_update_finished==False and server.TAF_update_finished==False):
                     logging.info("Original METAR and TAF have changed, but update process may not have been finished yet. Not sending anything yet.")
                     server.METAR_update_finished=True
                     server.TAF_update_finished=True
                     return
-                elif server.METAR_o_previous!=METAR_o and server.METAR_update_finished==False:    #if METAR original new different, but not waited yet: subscription, wait 1 round until source website refreshed METAR completely
+                elif server.METAR_o_previous!=METAR_o and server.METAR_update_finished==False:  #if METAR original new different, but not waited yet: subscription, wait 1 round until source website refreshed METAR completely
                     logging.info("Original METAR has changed, but update process may not have been finished yet. Not sending anything yet.")
                     server.METAR_update_finished=True
                     return
-                elif server.TAF_o_previous!=TAF_o and server.TAF_update_finished==False:          #if TAF original new different, but not waited yet: subscription, wait 1 round until source website refreshed TAF completely #type:ignore
+                elif server.TAF_o_previous!=TAF_o and server.TAF_update_finished==False:        #if TAF original new different, but not waited yet: subscription, wait 1 round until source website refreshed TAF completely
                     logging.info("Original TAF has changed, but update process may not have been finished yet. Not sending anything yet.")
                     server.TAF_update_finished=True
                     return
-                elif(server.METAR_o_previous!=METAR_o and server.TAF_o_previous!=TAF_o            #if METAR original new and TAF original new different and waited already: subscription, source website refreshed METAR and TAF completely, now send METAR and TAF #type:ignore
+                elif(server.METAR_o_previous!=METAR_o and server.TAF_o_previous!=TAF_o          #if METAR original new and TAF original new different and waited already: subscription, source website refreshed METAR and TAF completely, now send METAR and TAF
                     and server.METAR_update_finished==True and server.TAF_update_finished==True):
                     logging.info("Original METAR and TAF have changed and update process should have been finished.")
-                    server.METAR_o_previous=METAR_o                                        #refresh METAR original previous
-                    server.TAF_o_previous=TAF_o                                            #refresh TAF original previous #type:ignore
-                    server.METAR_update_finished=False                                     #reset already waited for METAR
-                    server.TAF_update_finished=False                                       #reset already waited for TAF
-                elif server.METAR_o_previous!=METAR_o and server.METAR_update_finished==True:     #if METAR original new different and waited already: subscription, source website refreshed METAR completely, now send METAR
+                    server.METAR_o_previous=METAR_o                                             #refresh METAR original previous
+                    server.TAF_o_previous=TAF_o                                                 #refresh TAF original previous
+                    server.METAR_update_finished=False                                          #reset already waited for METAR
+                    server.TAF_update_finished=False                                            #reset already waited for TAF
+                elif server.METAR_o_previous!=METAR_o and server.METAR_update_finished==True:   #if METAR original new different and waited already: subscription, source website refreshed METAR completely, now send METAR
                     logging.info("Original METAR has changed and update process should have been finished.")
-                    server.METAR_o_previous=METAR_o                                        #refresh METAR original previous
-                    server.METAR_update_finished=False                                     #reset already waited for METAR
-                    append_TAF=False                                                #TAF did probably not refresh yet, subscription, only send METAR
-                elif server.TAF_o_previous!=TAF_o and server.TAF_update_finished==True:           #if TAF original new different and waited already: subscription, source website refreshed TAF completely, now send METAR and TAF #type:ignore
+                    server.METAR_o_previous=METAR_o                                             #refresh METAR original previous
+                    server.METAR_update_finished=False                                          #reset already waited for METAR
+                    append_TAF=False                                                            #TAF did probably not refresh yet, subscription, only send METAR
+                elif server.TAF_o_previous!=TAF_o and server.TAF_update_finished==True:         #if TAF original new different and waited already: subscription, source website refreshed TAF completely, now send METAR and TAF
                     logging.info("Original TAF has changed and update process should have been finished.")
-                    server.TAF_o_previous=TAF_o                                            #refresh TAF original previous #type:ignore
-                    server.TAF_update_finished=False                                       #reset already waited for TAF
+                    server.TAF_o_previous=TAF_o                                                 #refresh TAF original previous
+                    server.TAF_update_finished=False                                            #reset already waited for TAF
 
             #send messages
             if append_TAF==False:
                 logging.info("Sending METAR and original METAR...")
-            elif append_TAF==True and TAF_o!=None:  #type:ignore
+            elif append_TAF==True and TAF_o!=None:
                 logging.info("Sending METAR, TAF, original METAR, and original TAF...")
-            elif append_TAF==True and TAF_o==None:  #type:ignore
+            elif append_TAF==True and TAF_o==None:
                 logging.info("Sending METAR, original METAR, and error message...")
 
             message_send=""
-            if station.name==None:                                       #if station name not found:
+            if station.name==None:                                          #if station name not found:
                 message_send+=f"Could not find {station.ICAO} in aerodrome database. No title, elevation, and runway directions available..\n----------\n"  #send error message
             else:                                                           #if station name found:
-                message_send+=f"{station.name}\n----------\n"            #send station name
+                message_send+=f"{station.name}\n----------\n"               #send station name
             if METAR_o==None:                                               #if METAR not found:
                 message_send+="There is no published METAR.\n----------\n"  #send error message
             else:                                                           #if METAR found:
                 message_send+=f"```{METAR}```\n----------\n"                #send METAR
-            if append_TAF==True and TAF_o==None:                            #if TAF desired and not found: #type:ignore
-                message_send+="There is no pusblished TAF.\n----------\n"   #send error message
-            elif append_TAF==True and TAF_o!=None:                          #if TAF desired and found: #type:ignore
-                message_send+=f"```{TAF}```\n----------\n"                  #send TAF #type:ignore
+            if append_TAF==True and TAF_o==None:                            #if TAF desired and not found:
+                message_send+="There is no published TAF.\n----------\n"    #send error message
+            elif append_TAF==True and TAF_o!=None:                          #if TAF desired and found:
+                message_send+=f"```{TAF}```\n----------\n"                  #send TAF
             if METAR_o!=None:                                               #if METAR found:
                 message_send+=f"```{METAR_o}```\n----------\n"              #send METAR original too
-            if append_TAF==True and TAF_o!=None:                            #if TAF desired and found: #type:ignore
-                message_send+=f"```{TAF_o}```\n----------\n"                #send TAF original too     #type:ignore
+            if append_TAF==True and TAF_o!=None:                            #if TAF desired and found:
+                message_send+=f"```{TAF_o}```\n----------\n"                #send TAF original too
             if station.elev!=None:                                      #if station elevation found:
                 message_send+=f"```Elevation = {KFS.fstr.notation_abs(station.elev, 0, round_static=True)}m ({KFS.fstr.notation_abs(station.elev/0.3048, 0, round_static=True)}ft)```\n----------\n".replace(",", ".")  #send station elevation
             
-            if METAR_o!=None or TAF_o!=None:    #if a METAR of TAF sent: warnings #type:ignore
+            if METAR_o!=None or TAF_o!=None:    #if a METAR of TAF sent: warnings
                 message_send+="Only use original METAR and TAF for flight operations!\n"
-                if station.name==None:       #if aerodrome not found in database
+                if station.name==None:          #if aerodrome not found in database
                     message_send+=f"Clouds are given as heights. Winds are assumed direct crosswind and will be marked at {KFS.fstr.notation_tech(WEATHER_MIN['CWC'], 2)}m/s or more. Variable winds are assumed direct tailwind and will be marked at {KFS.fstr.notation_tech(WEATHER_MIN['TWC'], 2)}m/s or more.\n"
-                elif station.elev==None:     #if only elevation not found
+                elif station.elev==None:        #if only elevation not found
                     message_send+="Clouds are given as heights.\n"
                 else:                           #if everything found: default message
                     message_send+="Clouds are given as \"{coverage}{altitude}|{height}\".\n"
@@ -340,7 +340,7 @@ async def main() -> None:
             server.force_print=False            #subscription
             await on_message(server.message_previous)
         return
-    station_subscription.start()    #start event
+    station_subscription.start()                #start event
 
     while True:
         logging.info("Starting discord client...")
