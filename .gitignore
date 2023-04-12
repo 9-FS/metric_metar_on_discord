@@ -5,5 +5,5 @@
 *.pyc
 *.token
 /Database/
-/Log/
+/log/
 /src/test.py
