@@ -3,7 +3,7 @@ Topic: "Metric METAR for Discord"
 Author: "구FS"
 ---
 <link href="./src/KFS/md_style.css" rel="stylesheet"></link>
-<div id="global">
+<body>
 
 # <p style="text-align: center">Discord METAR Bot</p>
 <br>
@@ -165,4 +165,4 @@ These are the features I am thinking about implementing in the future. Their sta
 - download VFR charts command
 - use of official database instead of open source database
 
-</div>
+</body>
