@@ -4,6 +4,7 @@
 *.log
 *.pyc
 *.token
+/doc_templates/
 /database/
 /log/
 /src/test.py

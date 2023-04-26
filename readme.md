@@ -2,7 +2,7 @@
 Topic: "Metric METAR for Discord"
 Author: "구FS"
 ---
-<link href="./src/KFS/md_style.css" rel="stylesheet"></link>
+<link href="./doc_templates/md_style.css" rel="stylesheet"></link>
 <body>
 
 # <p style="text-align: center">Discord METAR Bot</p>
