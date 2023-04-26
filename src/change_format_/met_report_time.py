@@ -17,7 +17,7 @@ def change_format_met_report_DT(info: str, met_report_DT: dt.datetime, now_DT: d
         timespan_published: dt.timedelta
 
         event_DT=dt.datetime(met_report_DT.year, met_report_DT.month, met_report_DT.day, 0, 0, 0, 0, dt.timezone.utc)   #event date, initialised with met report datetime
-        while event_DT.strftime("%d")!=re_match.groupdict()["day"]:                                                     #as long as days not matching:
+        while event_DT.day!=int(re_match.groupdict()["day"]):                                                           #as long as days not matching:
             event_DT+=dt.timedelta(days=1)                                                                              #event must be after met report datetime, increment day until same
         event_DT+=dt.timedelta(hours=int(re_match.groupdict()["hour"]), minutes=int(re_match.groupdict()["minute"]))    #correct day now, add time
 

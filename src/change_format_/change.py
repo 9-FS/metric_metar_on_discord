@@ -43,13 +43,13 @@ def change_format_change(info_list: list[str], i: int, met_report_DT: dt.datetim
         event_DT: dt.datetime
         info_new: str
 
-        event_DT=dt.datetime(met_report_DT.year, met_report_DT.month, met_report_DT.day, 0, 0, 0, 0, dt.timezone.utc)                   #event date, initialised with met report datetime
-        if re_match.groupdict()["day"]!="":                                                                                             #if event day given:
-            while event_DT.strftime("%d")!=re_match.groupdict()["day"]:                                                                 #as long as days not matching:
-                event_DT+=dt.timedelta(days=1)                                                                                          #event must be after met report datetime, increment day until same
-        if event_DT.strftime("%Y-%m-%d")==met_report_DT.strftime("%Y-%m-%d") and event_DT.strftime("%H")<re_match.groupdict()["hour"]:  #if date same and event hour < met report hour:
-            event_DT+=dt.timedelta(days=1)                                                                                              #event must be after met report datetime, must be day next
-        event_DT+=dt.timedelta(hours=int(re_match.groupdict()["hour"]), minutes=int(re_match.groupdict()["minute"]))                    #correct day now, add time
+        event_DT=dt.datetime(met_report_DT.year, met_report_DT.month, met_report_DT.day, 0, 0, 0, 0, dt.timezone.utc)   #event date, initialised with met report datetime
+        if re_match.groupdict()["day"]!="":                                                                             #if event day given:
+            while event_DT.day!=int(re_match.groupdict()["day"]):                                                       #as long as days not matching:
+                event_DT+=dt.timedelta(days=1)                                                                          #event must be after met report datetime, increment day until same
+        event_DT+=dt.timedelta(hours=int(re_match.groupdict()["hour"]), minutes=int(re_match.groupdict()["minute"]))    #add time
+        if event_DT<met_report_DT:                                                                                      #if event < met report:
+            event_DT+=dt.timedelta(days=1)                                                                              #event must be after met report datetime, must be day next
 
 
         info_new=f"{re_match.groupdict()['change_type']}"                   #change type

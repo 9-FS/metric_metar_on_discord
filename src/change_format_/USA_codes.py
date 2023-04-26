@@ -63,15 +63,15 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: Stat
         CWC: list=[]                                                            #across all runways, crosswind component
         event_DT: dt.datetime
         info_new: str
-        RWY: pandas.DataFrame=RWY_DB[RWY_DB["airport_ident"]==station.ICAO]  #in aerodrome all runways
+        RWY: pandas.DataFrame=RWY_DB[RWY_DB["airport_ident"]==station.ICAO]     #in aerodrome all runways
         wind_direction: int=int(re_match.groupdict()["wind_direction"])%360     #keep in [0; 360[
         wind_speed: float=float(re_match.groupdict()["wind_speed"])*KFS.convert_to_SI.speed["kt"]
 
-        event_DT=met_report_DT                                          #event date, initialised with met report datetime
-        while event_DT.strftime("%M")!=re_match.groupdict()["minute"]:  #as long as minutes not matching:
-            event_DT-=dt.timedelta(minutes=1)                           #event must be before met report datetime, decrement minute until same
-        while event_DT.strftime("%H")!=re_match.groupdict()["hour"]:    #as long as hours not matching:
-            event_DT-=dt.timedelta(hours=1)                             #event must be before met report datetime, decrement hour until same
+        event_DT=met_report_DT                                      #event date, initialised with met report datetime
+        while event_DT.minute!=int(re_match.groupdict()["minute"]): #as long as minutes not matching:
+            event_DT-=dt.timedelta(minutes=1)                       #event must be before met report datetime, decrement minute until same
+        while event_DT.hour!=int(re_match.groupdict()["hour"]):     #as long as hours not matching:
+            event_DT-=dt.timedelta(hours=1)                         #event must be before met report datetime, decrement hour until same
 
 
         if   met_report_DT.strftime("%Y-%m-%d")==event_DT.strftime("%Y-%m-%d"): #if date still same:
