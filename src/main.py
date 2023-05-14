@@ -35,46 +35,35 @@ async def main() -> None:
         "^(?P<station_ICAO>[0-9A-Z]{4}) TAF$",
         #"^(?P<station_ICAO>[0-9A-Z]{4}) INFO$" #TODO
     )
+    discord_bot: discord.Client             #discord client instance
     discord_bot_channel_names: list[str]    #bot channel names
     discord_bot_token: str                  #discord bot token
-    discord_client: discord.Client          #discord client instance
     intents: discord.Intents                #client permissions
-    UPDATE_FREQUENCY: float=10e-3           #update subscription with 10mHz (every 100s)
+    if logging.root.level<=logging.DEBUG:   #if level debug or lower:
+        UPDATE_FREQUENCY: float=200e-3      #update subscription with 200mHz (every 5s)
+    else:
+        UPDATE_FREQUENCY: float=50e-3       #but usually update subscription with 50mHz (every 20s)
 
     discord_bot_channel_names=[bot_channel_name for bot_channel_name in KFS.config.load_config("discord_bot_channel_names.config", "bots\nbotspam\nmetar").split("\n") if bot_channel_name!=""] #load bot channel names, remove empty lines
     discord_bot_token=KFS.config.load_config("discord_bot.token")   #load discord bot token
 
-    intents=discord.Intents.default()              #standard permissions
-    intents.message_content=True                   #in addition with message contents
-    discord_client=discord.Client(intents=intents) #create client instance
+    intents=discord.Intents.default()               #standard permissions
+    intents.message_content=True                    #in addition with message contents
+    discord_bot=discord.Client(intents=intents)     #create client instance
     
 
-    @discord_client.event
+    @discord_bot.event
     async def on_ready():
         """
         Executed as soon as bot started up and is ready. Also executes after bot reconnects to the internet and is ready again. Initialised databases.
         """
-        global aerodrome_DB
-        global country_DB
-        global frequency_DB
-        global navaid_DB
-        global RWY_DB
-        
-
-        logging.info("--------------------------------------------------")
-        now_DT=dt.datetime.now(dt.timezone.utc)
-
-        #initialise databases
-        aerodrome_DB=init_DB(DB_Type.aerodrome, aerodrome_DB, now_DT, DOWNLOAD_TIMEOUT)
-        country_DB  =init_DB(DB_Type.country,   country_DB,   now_DT, DOWNLOAD_TIMEOUT)
-        frequency_DB=init_DB(DB_Type.frequency, frequency_DB, now_DT, DOWNLOAD_TIMEOUT)
-        navaid_DB   =init_DB(DB_Type.navaid,    navaid_DB,    now_DT, DOWNLOAD_TIMEOUT)
-        RWY_DB      =init_DB(DB_Type.runway,    RWY_DB,       now_DT, DOWNLOAD_TIMEOUT)
-
+      
         logging.info("Started discord client.")
+        station_subscription.start()    #start station subscription task
+
         return
 
-    @discord_client.event
+    @discord_bot.event
     async def on_message(message):
         """
         Executed every time a message is sent on the server. If the message is not from the bot itself and in a bot channel, process it.
@@ -112,7 +101,7 @@ async def main() -> None:
                 self.server.force_print=True
                 return
         with ContextManager() as context:   #upon exit, force print by default
-            if message.author==discord_client.user or message.channel.name not in discord_bot_channel_names:    #if message from bot itself or outside dedicated bot channel: do nothing
+            if message.author==discord_bot.user or message.channel.name not in discord_bot_channel_names:   #if message from bot itself or outside dedicated bot channel: do nothing
                 return
             message.content=message.content.upper() #convert command to uppercase
             
@@ -340,12 +329,11 @@ async def main() -> None:
             server.force_print=False            #subscription
             await on_message(server.message_previous)
         return
-    station_subscription.start()                #start event
 
     while True:
         logging.info("Starting discord client...")
         try:
-            await discord_client.start(discord_bot_token)               #start discord client now
+            await discord_bot.start(discord_bot_token)               #start discord client now
         except aiohttp.client_exceptions.ClientConnectorError:          #if temporary internet failure: retry connection
             logging.error("Starting discord client failed, because client could not connect. Retrying in 10s...")
             await asyncio.sleep(10)
