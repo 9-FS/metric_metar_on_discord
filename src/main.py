@@ -47,7 +47,7 @@ async def main() -> None:
     if logging.root.level<=logging.DEBUG:   #if level debug or lower:
         UPDATE_FREQUENCY: float=200e-3      #update subscription with 200mHz (every 5s)
     else:
-        UPDATE_FREQUENCY: float=50e-3       #but usually update subscription with 50mHz (every 20s)
+        UPDATE_FREQUENCY: float=10e-3       #but usually update subscription with 10mHz (every 100s)
 
     discord_bot_channel_names=[bot_channel_name for bot_channel_name in KFS.config.load_config("discord_bot_channel_names.config", "bots\nbotspam\nmetar").split("\n") if bot_channel_name!=""] #load bot channel names, remove empty lines
     discord_bot_token=KFS.config.load_config("discord_bot.token")   #load discord bot token
@@ -362,7 +362,7 @@ async def main() -> None:
 
         for server in servers:
             server.force_print=False    #subscription
-            await on_message(server)
+            await on_message(server)    #type:ignore
         return
 
 
