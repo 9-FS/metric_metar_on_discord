@@ -124,7 +124,7 @@ Note the following differences:
 
 ## 2. How to Install by Inviting My Bot User (recommended)
 
-This method is recommended if you just want to use the bot out of the box and set and forget it. I have it running 24/7, there should be no problems in availability. Updates are also automatically applied as soon as I deploy them on my system. Sometimes I restart my hardware though, in this case you will need to resubscribe to your station of interest by requesting a METAR or a METAR with a TAF.
+This method is recommended if you just want to use the bot out of the box and set and forget it. I have it running 24/7, there should be no problems in availability. Updates are also automatically applied as soon as I deploy them on my system.
 
 1. Invite my bot user to your server by clicking [this link](https://discordapp.com/oauth2/authorize?&client_id=935809227660857375&scope=bot).
 1. Make sure to have a text channel named `bots`, `botspam`, or `metar` on your server. **The bot will only react in these specific channels.**  

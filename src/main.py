@@ -1,20 +1,22 @@
 #Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
-import aiohttp.client_exceptions    #for exception catching
+import aiohttp.client_exceptions
 import asyncio
-import discord, discord.ext.tasks   #discord, discord event scheduler
-import datetime as dt               #datetime
+import discord, discord.ext.tasks
+import datetime as dt
+import inspect
+import jsonpickle
 import KFS.config, KFS.convert_to_SI, KFS.fstr, KFS.log
-import logging                      #standard logging
-import pandas                       #DataFrame
-import re                           #regular expressions
-import requests                     #HTTP exceptions
-from DB_Type           import DB_Type           #database type for init_DB
-from Doc_Type          import Doc_Type          #process METAR or TAF?
-from init_DB           import init_DB           #download database or load from file
-from process_METAR_TAF import process_METAR_TAF #download and convert METAR or TAF
-from Server            import Server            #all variables for 1 server instance
-from Station           import Station           #station parsed ICAO: str, and name: str|None, elev: float|None
-from weather_minimums  import WEATHER_MIN       #weather minimums for marking
+import logging
+import pandas
+import re
+import requests
+from DB_Type           import DB_Type
+from Doc_Type          import Doc_Type
+from init_DB           import init_DB
+from process_METAR_TAF import process_METAR_TAF
+from Server            import Server
+from Station           import Station
+from weather_minimums  import WEATHER_MIN
 
 
 #keep over runtime whole
@@ -23,11 +25,14 @@ country_DB: pandas.DataFrame  =pandas.DataFrame()   #country database for countr
 frequency_DB: pandas.DataFrame=pandas.DataFrame()   #frequency database for information command
 navaid_DB: pandas.DataFrame   =pandas.DataFrame()   #navaid database for information command
 RWY_DB: pandas.DataFrame      =pandas.DataFrame()   #runway database for cross wind components and information command
-servers: list[Server]         =[]                   #all variables for 1 server instance
+servers: list[Server]                               #all variables for 1 server instance
+SERVERS_FILENAME: str="servers.json"                #save filename for all servers, so subscription is remembered beyond restarts
 
 
 @KFS.log.timeit_async
 async def main() -> None:
+    global servers
+    
     #keep over runtime whole, but read-only in sub-functions
     DOWNLOAD_TIMEOUT: int=50                #METAR and TAF download timeouts [s]
     COMMANDS_ALLOWED: tuple=(               #commands allowed
@@ -46,25 +51,33 @@ async def main() -> None:
 
     discord_bot_channel_names=[bot_channel_name for bot_channel_name in KFS.config.load_config("discord_bot_channel_names.config", "bots\nbotspam\nmetar").split("\n") if bot_channel_name!=""] #load bot channel names, remove empty lines
     discord_bot_token=KFS.config.load_config("discord_bot.token")   #load discord bot token
+    intents=discord.Intents.default()                               #standard permissions
+    intents.message_content=True                                    #in addition with message contents
+    discord_bot=discord.Client(intents=intents)                     #create client instance
 
-    intents=discord.Intents.default()               #standard permissions
-    intents.message_content=True                    #in addition with message contents
-    discord_bot=discord.Client(intents=intents)     #create client instance
-    
+    logging.info(f"Restoring server states from \"{SERVERS_FILENAME}\"...")
+    try:
+        with open(SERVERS_FILENAME, "rt") as servers_file:  #try to restore server states
+            servers=jsonpickle.decode(servers_file.read())  #type:ignore
+    except FileNotFoundError:   #if file not created yet: no server states available yet
+        logging.warning(f"\rRestoring server states from \"{SERVERS_FILENAME}\" failed with FileNotFoundError.")
+        servers=[]
+    else:
+        logging.info(f"\rRestored server states from \"{SERVERS_FILENAME}\".")
+
 
     @discord_bot.event
     async def on_ready():
         """
         Executed as soon as bot started up and is ready. Also executes after bot reconnects to the internet and is ready again. Initialised databases.
         """
-      
         logging.info("Started discord client.")
         station_subscription.start()    #start station subscription task
 
         return
 
     @discord_bot.event
-    async def on_message(message):
+    async def on_message(message: discord.Message|Server): #either discord.Message if discord triggers or Server instance if subscription task triggers
         """
         Executed every time a message is sent on the server. If the message is not from the bot itself and in a bot channel, process it.
 
@@ -81,6 +94,8 @@ async def main() -> None:
         #keep only for this iteration
         append_TAF: bool    #append TAF?
         #INFO_command: bool  #information command?
+        channel_id: int     #current channel id
+        command: str        #current command
         message_send: str   #message final to discord
         METAR_o: str|None   #METAR original format
         METAR: str|None     #METAR my format
@@ -92,45 +107,60 @@ async def main() -> None:
 
         class ContextManager():
             server: Server
-            def __enter__(self):                                                                #get current server, here because need access to server for force print in exit
-                if message.guild.id not in [server.id for server in servers]:                   #if server not yet in server list: append
-                    servers.append(Server(message.guild.id, message.guild.name))
-                self.server=next(server for server in servers if server.id==message.guild.id)   #get current server, SHALLOW COPY which is desired
+            def __enter__(self):                                    #get current server, here because need access to server for force print in exit
+                if isinstance(message, discord.message.Message):    #discord triggered
+                    if message.guild!=None and message.guild.id not in [server.id for server in servers]:   #if server not yet in server list: append
+                        servers.append(Server(message.guild.id, message.guild.name))
+                    self.server=next(server for server in servers if server.id==message.guild.id)   #get current server, SHALLOW COPY which is desired #type:ignore
+                elif isinstance(message, Server):   #subscription triggered
+                    self.server=message 
+                else:
+                    logging.critical("message: discord.Message|Server has invalid type \"{type(message)}\".")
+                    raise RuntimeError(f"Error in {main.__name__}{inspect.signature(main)}: message: discord.Message|Server has invalid type \"{type(message)}\".")
                 return self
-            def __exit__(self, exc_type, exc_value, exc_traceback):                             #upon exit, force print by default
+            def __exit__(self, exc_type, exc_value, exc_traceback): #upon exit, force print by default
                 self.server.force_print=True
                 return
-        with ContextManager() as context:   #upon exit, force print by default
-            if message.author==discord_bot.user or message.channel.name not in discord_bot_channel_names:   #if message from bot itself or outside dedicated bot channel: do nothing
-                return
-            message.content=message.content.upper() #convert command to uppercase
+        with ContextManager() as context:               #upon exit, force print by default
+            server=context.server                       #get current server from context, SHALLOW COPY which is desired
+            if isinstance(message, discord.message.Message):
+                if message.author==discord_bot.user or message.channel.name not in discord_bot_channel_names:  #if message from bot itself or outside dedicated bot channel: do nothing #type:ignore
+                    return
+                channel_id=message.channel.id   #save active channel id
+                command=message.content.upper() #save active command
+            elif isinstance(message, Server): 
+                channel_id=server.channel_id    #type:ignore
+                command=server.command          #type:ignore
+            else:
+                logging.critical("message: discord.Message|Server has invalid type \"{type(message)}\".")
+                raise RuntimeError(f"Error in {main.__name__}{inspect.signature(main)}: message: discord.Message|Server has invalid type \"{type(message)}\".")
             
-            server=context.server                   #get current server from context, SHALLOW COPY which is desired
-
+            
             logging.info("--------------------------------------------------")
-            logging.info(f"On server: {message.guild.name} ({message.guild.id})")   #which server are we on?
+            logging.info(f"On server: {server.name} ({server.id})")     #which server are we on?
             now_DT=dt.datetime.now(dt.timezone.utc)
 
             #station_ICAO, append_TAF
-            for command in COMMANDS_ALLOWED:                            #did message match an allowed command?
-                re_match=re.search(command, message.content)
+            logging.info(f"Command: {command}")
+            for command_allowed in COMMANDS_ALLOWED:                    #did message match an allowed command?
+                re_match=re.search(command_allowed, command)
                 if re_match==None:                                      #if message did not match this command:
                     continue
                 station=Station(re_match.groupdict()["station_ICAO"])   #parse station ICAO code
                 logging.info(f"Station: {station.ICAO}")
-                if message.content.endswith("TAF")==True:               #if message ends with TAF:
+                if command.endswith("TAF")==True:                       #if message ends with TAF:
                     logging.info("TAF was requested.")
                     append_TAF=True                                     #TAF requested, append TAF later
                 else:
                     append_TAF=False
                 # if command.endswith("INFO"):                           #if matched command ends with INFO:
                 #    logging.info("INFO was requested.")
-                #    INFO_command=True                                  #INFO requested, get information later
+                #    INFO_command=True                                   #INFO requested, get information later
                 # else:
                 #     INFO_command=False
                 break                                                   #command found, exit
             else:                                                       #if message did not match any command:
-                logging.error(f"Last message \"{message.content}\" did not match any allowed command.")
+                logging.error(f"Last command \"{command}\" did not match any allowed command.")
                 return
             
             #station_name, station_elev
@@ -141,15 +171,15 @@ async def main() -> None:
                 logging.warning(f"\rCould not find {station.ICAO} in aerodrome database. No title, elevation, and runway directions available.")
                 station.elev=None
                 station.name=None
-            else:                       #if aerodrome found in database:
+            else:                                                                       #if aerodrome found in database:
                 logging.info(f"\rFound {station.ICAO} in aerodrome database.")
                 country=country_DB[country_DB["code"]==aerodrome.at[0, "iso_country"]]  #country desired
                 country=country.reset_index(drop=True)
-                if country.empty==True: #if country not found in database:
+                if country.empty==True:                                                 #if country not found in database:
                     logging.warning(f"Could not find country of country code \"{aerodrome.at[0, 'iso_country']}\".")
                     station.name=f"{aerodrome.at[0, 'iso_country']}, {aerodrome.at[0, 'name']}" #enter country code, aerodrome name
                 else:   #if country found in database:
-                    station.name=f"{country.at[0, 'name']}, {aerodrome.at[0, 'name']}"  #enter country, aerodrome name
+                    station.name=f"{country.at[0, 'name']}, {aerodrome.at[0, 'name']}"          #enter country, aerodrome name
                 logging.info(f"Name: {station.name}")
 
                 if pandas.isna(aerodrome.at[0, "elevation_ft"])==True:  #if elevation unavailable:
@@ -161,7 +191,7 @@ async def main() -> None:
 
             #information command
             # if INFO_command==True:  #if information command: execute that, then return without downloading METAR, TAF etc.
-            #     await aerodrome_info(station, frequency_DB, navaid_DB, RWY_DB, message)
+            #     await aerodrome_info(station, frequency_DB, navaid_DB, RWY_DB, command)
             #     return
             
 
@@ -194,12 +224,13 @@ async def main() -> None:
 
 
             #print message? subscription logic
-            if server.force_print==True:                   #if force printing: no subscription
-                server.message_previous=message            #refresh message previous
-                server.METAR_o_previous=METAR_o            #refresh METAR original previous
-                server.TAF_o_previous=TAF_o                #refresh TAF orginal previous
-                server.METAR_update_finished=False         #reset already waited for METAR
-                server.TAF_update_finished=False           #reset already waited for TAF
+            if server.force_print==True:            #if force printing: no subscription
+                server.channel_id=channel_id        #save active channel id, at this point known that command valid
+                server.command=command              #save active command, this point known valid
+                server.METAR_o_previous=METAR_o     #refresh METAR original previous
+                server.TAF_o_previous=TAF_o         #refresh TAF orginal previous
+                server.METAR_update_finished=False  #reset already waited for METAR
+                server.TAF_update_finished=False    #reset already waited for TAF
             
             elif append_TAF==False:                                                             #subscription; if TAF undesired: disregard TAF
                 if server.METAR_o_previous==METAR_o:                                            #if METAR original same as previous one: subscription, don't print
@@ -274,7 +305,7 @@ async def main() -> None:
                 message_send+=f"```{METAR_o}```\n----------\n"              #send METAR original too
             if append_TAF==True and TAF_o!=None:                            #if TAF desired and found:
                 message_send+=f"```{TAF_o}```\n----------\n"                #send TAF original too
-            if station.elev!=None:                                      #if station elevation found:
+            if station.elev!=None:                                          #if station elevation found:
                 message_send+=f"```Elevation = {KFS.fstr.notation_abs(station.elev, 0, round_static=True)}m ({KFS.fstr.notation_abs(station.elev/0.3048, 0, round_static=True)}ft)```\n----------\n".replace(",", ".")  #send station elevation
             
             if METAR_o!=None or TAF_o!=None:    #if a METAR of TAF sent: warnings
@@ -287,7 +318,7 @@ async def main() -> None:
                     message_send+="Clouds are given as \"{coverage}{altitude}|{height}\".\n"
             
             try:
-                await message.channel.send(message_send)    #send message to discord
+                await discord_bot.get_channel(channel_id).send(message_send)    #send message to discord #type:ignore
             except discord.errors.DiscordServerError:
                 logging.error("Sending message to discord failed.")
                 return
@@ -297,6 +328,12 @@ async def main() -> None:
                 logging.info("\rSent METAR, TAF, original METAR, and original TAF.")
             elif append_TAF==True and TAF_o==None:
                 logging.info("\rSent METAR, original METAR, and error message.")
+
+        #save server states
+        logging.info(f"Saving server states in \"{SERVERS_FILENAME}\"...")
+        with open(SERVERS_FILENAME, "wt") as servers_file:                  #save servers state so subscription is remembered beyond restarts
+            servers_file.write(jsonpickle.encode(servers, indent=4))        #recursively convert everything in the list to a dict so json can save it #type:ignore
+        logging.info(f"\rSaved server states in \"{SERVERS_FILENAME}\".")
 
         return
 
@@ -324,17 +361,16 @@ async def main() -> None:
         
 
         for server in servers:
-            if server.message_previous==None:   #if no message since startup: no subscription possible
-                continue
-            server.force_print=False            #subscription
-            await on_message(server.message_previous)
+            server.force_print=False    #subscription
+            await on_message(server)
         return
+
 
     while True:
         logging.info("Starting discord client...")
         try:
-            await discord_bot.start(discord_bot_token)               #start discord client now
-        except aiohttp.client_exceptions.ClientConnectorError:          #if temporary internet failure: retry connection
+            await discord_bot.start(discord_bot_token)          #start discord client now
+        except aiohttp.client_exceptions.ClientConnectorError:  #if temporary internet failure: retry connection
             logging.error("Starting discord client failed, because client could not connect. Retrying in 10s...")
             await asyncio.sleep(10)
 
