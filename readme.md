@@ -5,7 +5,7 @@ Author: "구FS"
 <link href="./doc_templates/md_style.css" rel="stylesheet"></link>
 <body>
 
-# <p style="text-align: center">Discord METAR Bot</p>
+# <p style="text-align: center">Metric METAR for Discord</p>
 <br>
 <br>
 
@@ -21,18 +21,19 @@ Author: "구FS"
 - [3. How to Install by Setting Up Your Own Bot](#3-how-to-install-by-setting-up-your-own-bot)
 - [4. How to Use](#4-how-to-use)
 - [5. Possible Future Features](#5-possible-future-features)
+- [6. References](#6-references)
 
 <div style="page-break-after: always;"></div>
 
 ## 1. General
-
 ### 1.1. Overview
+
 This discord bot provides realtime meteorological aerodrome reports (METAR) and terminal aerodrome forecasts (TAF) of a requested station via a discord channel.  
 METAR and TAF will be provided:
 
 - **primarily in a more readable or even completely decoded way in which all units are stated and converted to SI**. This custom standard strives to be a more modern and better compromise between being able to quickly brief the relevant information and enhancing its readability.  
 Important: While the code has been proven reliable over 1 year of daily private use, **it is not certified to be used in real flight operations.**
-- secondarily in their original format which is guaranteed to be correct by [NOAA](https://tgftp.nws.noaa.gov/data/observations/metar/stations/), mainly for cross-checking
+- secondarily in their original format which is directly forwarded from [NOAA](https://www.noaa.gov/)[^1], mainly for cross-checking
 
 Once a station is requested, 2 things happen:
 
@@ -40,8 +41,8 @@ Once a station is requested, 2 things happen:
 1. The station is registered as the currently subscribed station. This means as soon as this station publishes a new METAR and, if requested, a new TAF, it will be automatically provided. This is a convenience functionality and the reason why using this bot is only recommended in a designated bot channel whose name is specified in `discord_bot_channel_names.config`. Channels with the name `bots`, `botspam`, and `metar` will be recognised by default.
 
 ### 1.2. Examples
-
 #### 1.2.1. Example 1: METAR
+
 ```
 EDDL 311120Z AUTO 23018KT 9999 -SHRA FEW029 FEW///TCU 12/08 Q0995 RESHRA TEMPO 23020G30KT
 ```
@@ -57,6 +58,7 @@ Note the following differences:
 - clouds given with altitude and height if they're different after rounding
 
 #### 1.2.2. Example 2: TAF
+
 ```
 TAF EDDL 311100Z 3112/0118 22015G25KT 9999 BKN030 PROB30
 TEMPO 3112/3113 24020G35KT SHRA BKN030TCU
@@ -79,7 +81,7 @@ BECMG 04-01T06/09 280°05m/s
 
 Note the following differences:
 - Timespans only contain the minimum amount of necessary information and are [ISO8601](https://en.wikipedia.org/wiki/ISO_8601) compliant. If only the hour changes, only that is stated in the end. If day and hour change, the day is also provided and so on.
-- Information violating the customisable weather minimums are encapsulated with double asterisks `**` to quickly draw attention at a glance. This is also true for METAR.
+- Information violating the customisable weather minimums are encapsulated with double asterisks `**` to quickly draw attention at a glance. This is also true for METAR. The weather minimums can currently only be set in the source code.
 
 #### 1.2.3. Example 3: USA
 
@@ -163,6 +165,15 @@ These are the features I am thinking about implementing in the future. Their sta
 
 - aerodrome information command
 - download VFR charts command
-- use of official database instead of open source database
+- switch from open source database https://ourairports.com/data/ to official database, currently no idea how to get free access
+- customisable weather minimums for each server
+
+## 6. References
+
+[^1]: METAR: https://tgftp.nws.noaa.gov/data/observations/metar/stations/  
+TAF: https://tgftp.nws.noaa.gov/data/forecasts/taf/stations/
 
 </body>
+
+
+
