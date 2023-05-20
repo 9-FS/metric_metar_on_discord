@@ -106,7 +106,9 @@ async def main() -> None:
 
 
         class ContextManager():
-            server: Server
+            save_server_states: bool=False  #save states after exiting? only if command was valid
+            server: Server                  #current server
+
             def __enter__(self):                                    #get current server, here because need access to server for force print in exit
                 if isinstance(message, discord.message.Message):    #discord triggered
                     if message.guild!=None and message.guild.id not in [server.id for server in servers]:   #if server not yet in server list: append
@@ -120,6 +122,11 @@ async def main() -> None:
                 return self
             def __exit__(self, exc_type, exc_value, exc_traceback): #upon exit, force print by default
                 self.server.force_print=True
+                if self.save_server_states==True:                                       #save server states? only if command was valid
+                    logging.info(f"Saving server states in \"{SERVERS_FILENAME}\"...")
+                    with open(SERVERS_FILENAME, "wt") as servers_file:                  #save servers state so subscription is remembered beyond restarts
+                        servers_file.write(jsonpickle.encode(servers, indent=4))        #recursively convert everything in the list to a dict so json can save it #type:ignore
+                    logging.info(f"\rSaved server states in \"{SERVERS_FILENAME}\".")
                 return
         with ContextManager() as context:               #upon exit, force print by default
             server=context.server                       #get current server from context, SHALLOW COPY which is desired
@@ -164,6 +171,7 @@ async def main() -> None:
             else:                                                       #if message did not match any command:
                 logging.error(f"Last command \"{command}\" did not match any allowed command.")
                 return
+            context.save_server_states=True #from here on: command is valid, save server state after exiting
             
             #station_name, station_elev
             logging.info(f"Looking for {station.ICAO} in aerodrome database...")
@@ -217,7 +225,7 @@ async def main() -> None:
 
 
             #print message? subscription logic
-            if server.force_print==True:            #if force printing: no subscription
+            if server.force_print==True:            #if force printing: no subscription, update server data
                 server.channel_id=channel_id        #save active channel id, at this point known that command valid
                 server.command=command              #save active command, this point known valid
                 server.METAR_o_previous=METAR_o     #refresh METAR original previous
@@ -299,7 +307,7 @@ async def main() -> None:
             if append_TAF==True and TAF_o!=None:                            #if TAF desired and found:
                 message_send+=f"```{TAF_o}```\n----------\n"                #send TAF original too
             if station.elev!=None:                                          #if station elevation found:
-                message_send+=f"```Elevation = {KFS.fstr.notation_abs(station.elev, 0, round_static=True)}m ({KFS.fstr.notation_abs(station.elev/0.3048, 0, round_static=True)}ft)```\n----------\n".replace(",", ".")  #send station elevation
+                message_send+=f"```Elevation = {KFS.fstr.notation_abs(station.elev, 0, round_static=True)}m ({KFS.fstr.notation_abs(station.elev/KFS.convert_to_SI.length['ft'], 0, round_static=True)}ft)```\n----------\n".replace(",", ".")  #send station elevation
             
             if METAR_o!=None or TAF_o!=None:    #if a METAR of TAF sent: warnings
                 message_send+="Only use original METAR and TAF for flight operations!\n"
@@ -312,7 +320,13 @@ async def main() -> None:
             
             try:
                 await discord_bot.get_channel(channel_id).send(message_send)    #send message to discord #type:ignore
-            except discord.errors.DiscordServerError:
+            except AttributeError:  #get_channel already returned None, bot has probably been removed from server
+                logging.error("Sending message to discord failed. Assuming bot has been removed from server.")
+                logging.info(f"Deleting server {server.name} ({server.id}) from servers list...")
+                servers=[s for s in servers if s.id!=server.id] #delete from list
+                logging.info(f"\rDeleted server {server.name} ({server.id}) from servers list.")
+                return
+            except discord.errors.DiscordServerError:   #send failed
                 logging.error("Sending message to discord failed.")
                 return
             if append_TAF==False:
@@ -321,12 +335,6 @@ async def main() -> None:
                 logging.info("\rSent METAR, TAF, original METAR, and original TAF.")
             elif append_TAF==True and TAF_o==None:
                 logging.info("\rSent METAR, original METAR, and error message.")
-
-        #save server states
-        logging.info(f"Saving server states in \"{SERVERS_FILENAME}\"...")
-        with open(SERVERS_FILENAME, "wt") as servers_file:                  #save servers state so subscription is remembered beyond restarts
-            servers_file.write(jsonpickle.encode(servers, indent=4))        #recursively convert everything in the list to a dict so json can save it #type:ignore
-        logging.info(f"\rSaved server states in \"{SERVERS_FILENAME}\".")
 
         return
 
