@@ -198,23 +198,14 @@ async def main() -> None:
             #download and convert METAR and TAF
             try:
                 METAR_o, METAR=process_METAR_TAF(Doc_Type.METAR, station, RWY_DB, now_DT, server, DOWNLOAD_TIMEOUT)
-            except requests.ConnectTimeout:     #if unsuccessful: abort
-                logging.error(f"\rDownloading METAR timed out after {DOWNLOAD_TIMEOUT}s.")
-                return
-            except requests.ConnectionError:    #if unsuccessful: abort
-                logging.error("\rDownloading METAR failed.")
+            except (requests.ConnectTimeout, requests.ConnectionError, ValueError): #if unsuccessful: abort
                 return
             
-            if append_TAF==True:    #if append TAF: append TAF
+            if append_TAF==True:    #if append TAF: download and process TAF
                 try:
                     TAF_o, TAF=process_METAR_TAF(Doc_Type.TAF, station, RWY_DB, now_DT, server, DOWNLOAD_TIMEOUT)
-                except requests.ConnectTimeout:     #if unsuccessful: just no TAF
-                    logging.warning(f"\rDownloading TAF timed out after {DOWNLOAD_TIMEOUT}s. Continuing without TAF...")
-                    append_TAF=False
-                    TAF_o=None
-                    TAF=None
-                except requests.ConnectionError:    #if unsuccessful: just no TAF
-                    logging.warning("\rDownloading TAF failed. Continuing without TAF...")
+                except (requests.ConnectTimeout, requests.ConnectionError, ValueError): #if unsuccessful: just no TAF
+                    logging.warning(f"Continuing without TAF...")
                     append_TAF=False
                     TAF_o=None
                     TAF=None
