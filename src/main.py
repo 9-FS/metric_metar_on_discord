@@ -128,9 +128,11 @@ async def main() -> None:
                     return
                 channel_id=message.channel.id   #save active channel id
                 command=message.content.upper() #save active command
-            elif isinstance(message, Server): 
-                channel_id=server.channel_id    #type:ignore
-                command=server.command          #type:ignore
+            elif isinstance(message, Server):
+                if server.channel_id==None or server.command==None:  #if server created but has no valid command executed yet (invited to server but no command via dedicated bot channel executed)
+                    return
+                channel_id=server.channel_id
+                command=server.command
             else:
                 logging.critical("message: discord.Message|Server has invalid type \"{type(message)}\".")
                 raise RuntimeError(f"Error in {main.__name__}{inspect.signature(main)}: message: discord.Message|Server has invalid type \"{type(message)}\".")
