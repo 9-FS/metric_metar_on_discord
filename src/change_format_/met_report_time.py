@@ -1,6 +1,6 @@
 #Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import datetime as dt
-import KFS.fstr
+from KFSfstr import KFSfstr
 import re
 from Server import Server
 
@@ -24,8 +24,8 @@ def change_format_met_report_DT(info: str, met_report_DT: dt.datetime, now_DT: d
 
         info_new=f"{event_DT.strftime('%Y-%m-%dT%H:%M')}"
 
-        if server.force_print==True:             #if force print because no subscription:
-            timespan_published=now_DT-event_DT   #append timespan published
-            info_new+=f" ({KFS.fstr.notation_tech(timespan_published.total_seconds(), 2)}s ago)"
+        if server.force_print==True:            #if force print because no subscription:
+            timespan_published=now_DT-event_DT  #append timespan published
+            info_new+=f" ({KFSfstr.notation_tech(timespan_published.total_seconds(), 2)}s ago)"
 
         return f" {info_new}"

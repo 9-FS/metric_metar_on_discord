@@ -5,7 +5,10 @@ import discord, discord.ext.tasks
 import datetime as dt
 import inspect
 import jsonpickle
-import KFS.config, KFS.convert_to_SI, KFS.fstr, KFS.log
+from KFSconfig        import KFSconfig
+from KFSconvert_to_SI import KFSconvert_to_SI
+from KFSfstr          import KFSfstr
+from KFSlog           import KFSlog
 import logging
 import pandas
 import re
@@ -29,7 +32,7 @@ servers: list[Server]                               #all variables for 1 server 
 SERVERS_FILENAME: str="servers.json"                #save filename for all servers, so subscription is remembered beyond restarts
 
 
-@KFS.log.timeit_async
+@KFSlog.timeit_async
 async def main() -> None:
     global servers
     
@@ -49,8 +52,8 @@ async def main() -> None:
     else:
         UPDATE_FREQUENCY: float=10e-3       #but usually update subscription with 10mHz (every 100s)
 
-    discord_bot_channel_names=[bot_channel_name for bot_channel_name in KFS.config.load_config("discord_bot_channel_names.config", "bots\nbotspam\nmetar").split("\n") if bot_channel_name!=""] #load bot channel names, remove empty lines
-    discord_bot_token=KFS.config.load_config("discord_bot.token")   #load discord bot token
+    discord_bot_channel_names=[bot_channel_name for bot_channel_name in KFSconfig.load_config("discord_bot_channel_names.config", "bots\nbotspam\nmetar").split("\n") if bot_channel_name!=""] #load bot channel names, remove empty lines
+    discord_bot_token=KFSconfig.load_config("discord_bot.token")   #load discord bot token
     intents=discord.Intents.default()                               #standard permissions
     intents.message_content=True                                    #in addition with message contents
     discord_bot=discord.Client(intents=intents)                     #create client instance
@@ -196,8 +199,8 @@ async def main() -> None:
                     logging.warning(f"\r{station.ICAO} has no elevation information in aerodrome database. No elevation available.")
                     station.elev=None
                 else:                                                   #if elevation available:
-                    station.elev=aerodrome.at[0, "elevation_ft"]*KFS.convert_to_SI.length["ft"]  #save elevation [m]
-                    logging.info(f"Elevation: {KFS.fstr.notation_abs(station.elev, 0, round_static=True)}m")
+                    station.elev=aerodrome.at[0, "elevation_ft"]*KFSconvert_to_SI.LENGTH["ft"]  #save elevation [m]
+                    logging.info(f"Elevation: {KFSfstr.notation_abs(station.elev, 0, round_static=True)}m")
 
             #information command
             # if INFO_command==True:  #if information command: execute that, then return without downloading METAR, TAF etc.
@@ -307,12 +310,12 @@ async def main() -> None:
             if append_TAF==True and TAF_o!=None:                            #if TAF desired and found:
                 message_send+=f"```{TAF_o}```\n----------\n"                #send TAF original too
             if station.elev!=None:                                          #if station elevation found:
-                message_send+=f"```Elevation = {KFS.fstr.notation_abs(station.elev, 0, round_static=True)}m ({KFS.fstr.notation_abs(station.elev/KFS.convert_to_SI.length['ft'], 0, round_static=True)}ft)```\n----------\n".replace(",", ".")  #send station elevation
+                message_send+=f"```Elevation = {KFSfstr.notation_abs(station.elev, 0, round_static=True)}m ({KFSfstr.notation_abs(station.elev/KFSconvert_to_SI.LENGTH['ft'], 0, round_static=True)}ft)```\n----------\n".replace(",", ".")  #send station elevation
             
             if METAR_o!=None or TAF_o!=None:    #if a METAR of TAF sent: warnings
                 message_send+="Only use original METAR and TAF for flight operations!\n"
                 if station.name==None:          #if aerodrome not found in database
-                    message_send+=f"Clouds are given as heights. Winds are assumed direct crosswind and will be marked at {KFS.fstr.notation_tech(WEATHER_MIN['CWC'], 2)}m/s or more. Variable winds are assumed direct tailwind and will be marked at {KFS.fstr.notation_tech(WEATHER_MIN['TWC'], 2)}m/s or more.\n"
+                    message_send+=f"Clouds are given as heights. Winds are assumed direct crosswind and will be marked at {KFSfstr.notation_tech(WEATHER_MIN['CWC'], 2)}m/s or more. Variable winds are assumed direct tailwind and will be marked at {KFSfstr.notation_tech(WEATHER_MIN['TWC'], 2)}m/s or more.\n"
                 elif station.elev==None:        #if only elevation not found
                     message_send+="Clouds are given as heights.\n"
                 else:                           #if everything found: default message

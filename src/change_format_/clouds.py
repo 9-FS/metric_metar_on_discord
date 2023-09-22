@@ -1,5 +1,6 @@
 #Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
-import KFS.fstr, KFS.convert_to_SI
+from KFSconvert_to_SI import KFSconvert_to_SI
+from KFSfstr          import KFSfstr
 import re
 from Station          import Station
 from weather_minimums import WEATHER_MIN
@@ -14,25 +15,25 @@ def change_format_clouds(info: str, station: Station) -> str|None:
     if re_match!=None:
         cloud_ALT: float                                                                            #altitude [m]
         cloud_coverage: str=re_match.groupdict()["cloud_coverage"]                                  #cloud coverage [1/8]
-        cloud_HGT: float=int(re_match.groupdict()["cloud_HGT"])*100*KFS.convert_to_SI.length["ft"]  #height [m]
+        cloud_HGT: float=int(re_match.groupdict()["cloud_HGT"])*100*KFSconvert_to_SI.LENGTH["ft"]   #height [m]
         cloud_type: str=re_match.groupdict()["cloud_type"]                                          #append cloud type, usually TCU or CB
         info_new: str
 
-        if station.elev==None:               #if aerodrome elevation unknown:
+        if station.elev==None:                  #if aerodrome elevation unknown:
             cloud_ALT=cloud_HGT                 #assume elevation=0m
         else:                                   #if aerodrome elevation known:
-            cloud_ALT=cloud_HGT+station.elev #calculate altitude normally
+            cloud_ALT=cloud_HGT+station.elev    #calculate altitude normally
 
 
         info_new=cloud_coverage
         if cloud_HGT==0:                                                                                                        #if HGT==0m:
-            info_new+=f"{KFS.fstr.notation_abs(cloud_ALT, 0, round_static=True)}m"                                              #cloud touches ground, ALT==elevation, round altitude and height to 1m
-            if KFS.fstr.notation_abs(cloud_ALT, 0, round_static=True)!=KFS.fstr.notation_abs(cloud_HGT, 0, round_static=True):  #if height!=altitude:
-                info_new+=f"|{KFS.fstr.notation_abs(cloud_HGT, 0, round_static=True)}m"                                         #append height
-        else:                                                                               #if HGT!=0:
-            info_new+=f"{KFS.fstr.notation_abs(cloud_ALT, 2)}m"                             #round altitude to 2 signifcant digits
-            if KFS.fstr.notation_abs(cloud_ALT, 2)!=KFS.fstr.notation_abs(cloud_HGT, 2):    #if height!=altitude:
-                info_new+=f"|{KFS.fstr.notation_abs(cloud_HGT, 2)}m"                        #append height
+            info_new+=f"{KFSfstr.notation_abs(cloud_ALT, 0, round_static=True)}m"                                               #cloud touches ground, ALT==elevation, round altitude and height to 1m
+            if KFSfstr.notation_abs(cloud_ALT, 0, round_static=True)!=KFSfstr.notation_abs(cloud_HGT, 0, round_static=True):    #if height!=altitude:
+                info_new+=f"|{KFSfstr.notation_abs(cloud_HGT, 0, round_static=True)}m"                                          #append height
+        else:                                                                           #if HGT!=0:
+            info_new+=f"{KFSfstr.notation_abs(cloud_ALT, 2)}m"                          #round altitude to 2 signifcant digits
+            if KFSfstr.notation_abs(cloud_ALT, 2)!=KFSfstr.notation_abs(cloud_HGT, 2):  #if height!=altitude:
+                info_new+=f"|{KFSfstr.notation_abs(cloud_HGT, 2)}m"                     #append height
 
         if cloud_type!="":  #if cloud type given: append
             info_new+=f"|{cloud_type}"

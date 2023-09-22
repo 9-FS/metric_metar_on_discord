@@ -1,6 +1,6 @@
 #Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import datetime as dt
-import KFS.fstr
+from KFSfstr import KFSfstr
 import re
 
 
@@ -26,7 +26,7 @@ def change_format_change(info_list: list[str], i: int, met_report_DT: dt.datetim
     #probability
     re_match=re.search("^PROB(?P<probability>[0-9]{2})$", info_list[i])
     if re_match!=None:
-        info_new=f"PROB{KFS.fstr.notation_abs(float(re_match.groupdict()['probability'])/100, 2, round_static=True, trailing_zeros=False)}" #change info new, linebreak then forward
+        info_new=f"PROB{KFSfstr.notation_abs(float(re_match.groupdict()['probability'])/100, 2, round_static=True, trailing_zeros=False)}" #change info new, linebreak then forward
         
         if i==0:                                                #if info[0]:
             info_new=f"{info_new}"                              #just forward

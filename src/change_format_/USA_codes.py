@@ -1,9 +1,10 @@
 #Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import datetime as dt
 import inspect
-import KFS.convert_to_SI, KFS.fstr
+from KFSconvert_to_SI import KFSconvert_to_SI
+from KFSfstr          import KFSfstr
 import logging
-import numpy        #for crosswind component, numpy unctions because of DataFrames input
+import numpy    #for crosswind component, numpy unctions because of DataFrames input
 import pandas
 import re
 from Station          import Station
@@ -65,7 +66,7 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: Stat
         info_new: str
         RWY: pandas.DataFrame=RWY_DB[RWY_DB["airport_ident"]==station.ICAO]     #in aerodrome all runways
         wind_direction: int=int(re_match.groupdict()["wind_direction"])%360     #keep in [0; 360[
-        wind_speed: float=float(re_match.groupdict()["wind_speed"])*KFS.convert_to_SI.speed["kt"]
+        wind_speed: float=float(re_match.groupdict()["wind_speed"])*KFSconvert_to_SI.SPEED["kt"]
 
         event_DT=met_report_DT                                      #event date, initialised with met report datetime
         while event_DT.minute!=int(re_match.groupdict()["minute"]): #as long as minutes not matching:
@@ -83,7 +84,7 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: Stat
         else:                                                                   #nothing same:
             info_new=f"{event_DT.strftime('%Y-%m-%dT%H:%M')}"                   #full datetime
 
-        info_new+=f"/{KFS.fstr.notation_abs(wind_direction, 0, round_static=True, width=3)}°{KFS.fstr.notation_abs(wind_speed, 0, round_static=True, width=2)}m/s"
+        info_new+=f"/{KFSfstr.notation_abs(wind_direction, 0, round_static=True, width=3)}°{KFSfstr.notation_abs(wind_speed, 0, round_static=True, width=2)}m/s"
 
 
         if RWY.empty==True: #if no runways found: assume direct crosswind
@@ -146,8 +147,8 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: Stat
     #USA code PWE: precipitation water equivalent
     re_match=re.search("^P(?P<PWE>[0-9]{4})$", info)
     if re_match!=None:
-        PWE=int(re_match.groupdict()["PWE"])/100*KFS.convert_to_SI.length["in"]
-        return f" PWE/{KFS.fstr.notation_tech(PWE, 2)}m"
+        PWE=int(re_match.groupdict()["PWE"])/100*KFSconvert_to_SI.LENGTH["in"]
+        return f" PWE/{KFSfstr.notation_tech(PWE, 2)}m"
     
 
     #USA code T: temperature and dewpoint
@@ -215,11 +216,11 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: Stat
     #USA code 4/: snow depth
     re_match=re.search("^4/(?P<snow_depth>[0-9]{3})$", info)
     if re_match!=None:
-        snow_depth: float=int(re_match.groupdict()["snow_depth"])*KFS.convert_to_SI.length["in"]
+        snow_depth: float=int(re_match.groupdict()["snow_depth"])*KFSconvert_to_SI.LENGTH["in"]
         info_new: str
 
 
-        info_new=f"SNOW/{KFS.fstr.notation_tech(snow_depth, 2)}m"
+        info_new=f"SNOW/{KFSfstr.notation_tech(snow_depth, 2)}m"
         
         if 0<snow_depth:
             info_new=f"**{info_new}**"
@@ -280,7 +281,7 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: Stat
             raise RuntimeError(f"Error in {change_format_USA_codes.__name__}{inspect.signature(change_format_USA_codes)}: Pressure trend direction is not in [0; 8], but \"{trend_direction}\".")
 
 
-        info_new=f"ΔPRES3h/{trend_direction}{KFS.fstr.notation_tech(pressure_change, -1, round_static=True)}Pa"
+        info_new=f"ΔPRES3h/{trend_direction}{KFSfstr.notation_tech(pressure_change, -1, round_static=True)}Pa"
         
         return f" {info_new}"
 
@@ -288,19 +289,19 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: Stat
     #USA code 6: in 11ks (3h) or 22ks (6h) precipitation amount
     re_match=re.search("^6(?P<precipitation>[0-9]{4})$", info)
     if re_match!=None:
-        precipitation: float=float(re_match.groupdict()["precipitation"])/100*KFS.convert_to_SI.length["in"]
+        precipitation: float=float(re_match.groupdict()["precipitation"])/100*KFSconvert_to_SI.LENGTH["in"]
         
         
-        return f" PCPN(3h,6h)/{KFS.fstr.notation_tech(precipitation, 2)}m"
+        return f" PCPN(3h,6h)/{KFSfstr.notation_tech(precipitation, 2)}m"
 
 
     #USA code 7: in 86ks (24h) precipitation amount
     re_match=re.search("^7(?P<precipitation>[0-9]{4})$", info)
     if re_match!=None:
-        precipitation: float=float(re_match.groupdict()["precipitation"])/100*KFS.convert_to_SI.length["in"]
+        precipitation: float=float(re_match.groupdict()["precipitation"])/100*KFSconvert_to_SI.LENGTH["in"]
 
 
-        return f" PCPN24h/{KFS.fstr.notation_tech(precipitation, 2)}m"
+        return f" PCPN24h/{KFSfstr.notation_tech(precipitation, 2)}m"
 
 
     #USA code 8/: cloud type
@@ -338,17 +339,17 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: Stat
     #USA code 98: sunshine duration
     re_match=re.search("^98(?P<sunshine_duration>[0-9]{3})$", info)
     if re_match!=None:
-        sunshine_duration: int=int(re_match.groupdict()["sunshine_duration"])*KFS.convert_to_SI.time["min"]
-        return f" SUN/{KFS.fstr.notation_tech(sunshine_duration, 2)}s"
+        sunshine_duration: int=int(re_match.groupdict()["sunshine_duration"])*KFSconvert_to_SI.TIME["min"]
+        return f" SUN/{KFSfstr.notation_tech(sunshine_duration, 2)}s"
     
 
     #USA code 931: in 22ks (6h) snowfall
     re_match=re.search("^931(?P<snowfall>[0-9]{3})$", info)
     if re_match!=None:
-        snowfall: float=int(re_match.groupdict()["snowfall"])/10*KFS.convert_to_SI.length["in"]
+        snowfall: float=int(re_match.groupdict()["snowfall"])/10*KFSconvert_to_SI.LENGTH["in"]
         
         
-        info_new=f"SNOW6h/{KFS.fstr.notation_tech(snowfall, 2)}m"
+        info_new=f"SNOW6h/{KFSfstr.notation_tech(snowfall, 2)}m"
         
         if 0<snowfall:
             info_new=f"**{info_new}**"
@@ -358,10 +359,10 @@ def change_format_USA_codes(info: str, met_report_DT: dt.datetime, station: Stat
     #USA code 933: snow liquid water equivalent (SWE)
     re_match=re.search("^933(?P<SWE>[0-9]{3})$", info)
     if re_match!=None:
-        SWE: float=int(re_match.groupdict()["SWE"])/10*KFS.convert_to_SI.length["in"]
+        SWE: float=int(re_match.groupdict()["SWE"])/10*KFSconvert_to_SI.LENGTH["in"]
         
         
-        info_new=f"SWE/{KFS.fstr.notation_tech(SWE, 2)}m"
+        info_new=f"SWE/{KFSfstr.notation_tech(SWE, 2)}m"
         
         if 0<SWE:
             info_new=f"**{info_new}**"

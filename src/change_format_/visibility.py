@@ -1,5 +1,6 @@
 #Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
-import KFS.convert_to_SI, KFS.fstr
+from KFSconvert_to_SI import KFSconvert_to_SI
+from KFSfstr          import KFSfstr
 import re
 from weather_minimums import WEATHER_MIN
 
@@ -33,9 +34,9 @@ def change_format_vis(info_list: list, i: int) -> str|None:
 
         
         if visibility<5e3: #if visbility<5km: round to 2 significant digits
-            info_new=f"{KFS.fstr.notation_tech(visibility, 2)}m"
+            info_new=f"{KFSfstr.notation_tech(visibility, 2)}m"
         else:       #if 5km<=visibility: round to whole km
-            info_new=f"{KFS.fstr.notation_tech(visibility, -3, round_static=True)}m"
+            info_new=f"{KFSfstr.notation_tech(visibility, -3, round_static=True)}m"
         
         info_new+=plus_minus    #append plus or minus
 
@@ -54,7 +55,7 @@ def change_format_vis(info_list: list, i: int) -> str|None:
         visibility: float=int(re_match.groupdict()["visibility"])*1000
 
 
-        info_new=f"{KFS.fstr.notation_tech(visibility, -3, round_static=True)}m"
+        info_new=f"{KFSfstr.notation_tech(visibility, -3, round_static=True)}m"
         
         if "vis" in WEATHER_MIN and visibility<WEATHER_MIN["vis"]:  #if visibility below minimums: mark
             info_new=f"**{info_new}**"
@@ -66,10 +67,10 @@ def change_format_vis(info_list: list, i: int) -> str|None:
     if re_match!=None:
         info_new: str
         plus_minus: str=PLUS_MINUS[re_match.groupdict()["plus_minus"]]
-        visibility: float=int(re_match.groupdict()["visibility"])*KFS.convert_to_SI.length["SM"]
+        visibility: float=int(re_match.groupdict()["visibility"])*KFSconvert_to_SI.LENGTH["SM"]
         
 
-        info_new=f"{KFS.fstr.notation_tech(visibility, 2)}m{plus_minus}"
+        info_new=f"{KFSfstr.notation_tech(visibility, 2)}m{plus_minus}"
         
         if "USA_vis" in WEATHER_MIN and visibility<WEATHER_MIN["USA_vis"]:  #if visibility below USA minimums: mark
             info_new=f"**{info_new}**"
@@ -98,10 +99,10 @@ def change_format_vis(info_list: list, i: int) -> str|None:
     if re_match!=None:
         info_new: str
         plus_minus: str=PLUS_MINUS[re_match.groupdict()["plus_minus"]]
-        visibility: float=int(re_match.groupdict()["vis_B"])/int(re_match.groupdict()["vis_C"])*KFS.convert_to_SI.length["SM"]
+        visibility: float=int(re_match.groupdict()["vis_B"])/int(re_match.groupdict()["vis_C"])*KFSconvert_to_SI.LENGTH["SM"]
 
 
-        info_new=f"{KFS.fstr.notation_tech(visibility, 2)}m{plus_minus}"
+        info_new=f"{KFSfstr.notation_tech(visibility, 2)}m{plus_minus}"
         
         if "USA_vis" in WEATHER_MIN and visibility<WEATHER_MIN["USA_vis"]:  #if visibility below USA minimums: mark
             info_new=f"**{info_new}**"

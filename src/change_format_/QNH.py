@@ -1,6 +1,7 @@
 #Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import inspect
-import KFS.convert_to_SI, KFS.fstr
+from KFSconvert_to_SI import KFSconvert_to_SI
+from KFSfstr          import KFSfstr
 import logging
 import re
 from weather_minimums import WEATHER_MIN
@@ -17,7 +18,7 @@ def change_format_QNH(info: str) -> str|None:
         QNH=float(re_match.groupdict()['QNH'])*100
         
         
-        info_new=f"Q{KFS.fstr.notation_abs(QNH*1e-3, 1, round_static=True, width=5)}kPa"
+        info_new=f"Q{KFSfstr.notation_abs(QNH*1e-3, 1, round_static=True, width=5)}kPa"
 
         if ("QNH_min" in WEATHER_MIN and QNH<WEATHER_MIN["QNH_min"]) or ("QNH_max" in WEATHER_MIN and WEATHER_MIN["QNH_max"]<QNH):  #QNH unusual, because of possible altimeter settings and possible storms at low pressure
             info_new=f"**{info_new}**"
@@ -28,10 +29,10 @@ def change_format_QNH(info: str) -> str|None:
     re_match=re.search("^A(?P<QNH>[0-9]{4})$", info)
     if re_match!=None:
         info_new: str
-        QNH=float(re_match.groupdict()['QNH'])/100*KFS.convert_to_SI.pressure["inHg"]
+        QNH=float(re_match.groupdict()['QNH'])/100*KFSconvert_to_SI.PRESSURE["inHg"]
         
         
-        info_new=f"A{KFS.fstr.notation_abs(QNH*1e-3, 1, round_static=True, width=5)}kPa"
+        info_new=f"A{KFSfstr.notation_abs(QNH*1e-3, 1, round_static=True, width=5)}kPa"
 
         if ("QNH_min" in WEATHER_MIN and QNH<WEATHER_MIN["QNH_min"]) or ("QNH_max" in WEATHER_MIN and WEATHER_MIN["QNH_max"]<QNH):  #QNH unusual, because of possible altimeter settings and possible storms at low pressure
             info_new=f"**{info_new}**"
@@ -42,10 +43,10 @@ def change_format_QNH(info: str) -> str|None:
     re_match=re.search("^QNH(?P<QNH>[0-9]{4})INS$", info)
     if re_match!=None:
         info_new: str
-        QNH=float(re_match.groupdict()['QNH'])/100*KFS.convert_to_SI.pressure["inHg"]
+        QNH=float(re_match.groupdict()['QNH'])/100*KFSconvert_to_SI.PRESSURE["inHg"]
        
        
-        info_new=f"A{KFS.fstr.notation_abs(QNH*1e-3, 1, round_static=True, width=5)}kPa"
+        info_new=f"A{KFSfstr.notation_abs(QNH*1e-3, 1, round_static=True, width=5)}kPa"
 
         if ("QNH_min" in WEATHER_MIN and QNH<WEATHER_MIN["QNH_min"]) or ("QNH_max" in WEATHER_MIN and WEATHER_MIN["QNH_max"]<QNH):  #QNH unusual, because of possible altimeter settings and possible storms at low pressure
             info_new=f"**{info_new}**"
@@ -56,10 +57,10 @@ def change_format_QNH(info: str) -> str|None:
     re_match=re.search("^QFE(?P<QFE>[0-9]{3}([.][0-9])?)$", info)
     if re_match!=None:
         info_new: str
-        QFE=float(re_match.groupdict()['QFE'])*KFS.convert_to_SI.pressure["mmHg"]
+        QFE=float(re_match.groupdict()['QFE'])*KFSconvert_to_SI.PRESSURE["mmHg"]
         
 
-        info_new=f"QFE{KFS.fstr.notation_abs(QFE*1e-3, 1, round_static=True, width=5)}kPa"
+        info_new=f"QFE{KFSfstr.notation_abs(QFE*1e-3, 1, round_static=True, width=5)}kPa"
 
         return f" {info_new}"
     
@@ -71,7 +72,7 @@ def change_format_QNH(info: str) -> str|None:
         QFE=float(re_match.groupdict()['QFE'])*100
         
 
-        info_new=f"QFE{KFS.fstr.notation_abs(QFE*1e-3, 1, round_static=True, width=5)}kPa"
+        info_new=f"QFE{KFSfstr.notation_abs(QFE*1e-3, 1, round_static=True, width=5)}kPa"
 
         return f" {info_new}"
 
@@ -92,6 +93,6 @@ def change_format_QNH(info: str) -> str|None:
             raise RuntimeError(f"Error in {change_format_QNH.__name__}{inspect.signature(change_format_QNH)}: SLP info *10 shoud be in [0; 10e3[, but it is {SLP}.")
         
 
-        info_new=f"SLP{KFS.fstr.notation_abs(SLP*1e-3, 2, round_static=True, width=6)}kPa"
+        info_new=f"SLP{KFSfstr.notation_abs(SLP*1e-3, 2, round_static=True, width=6)}kPa"
         
         return f" {info_new}"

@@ -1,6 +1,7 @@
 #Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
-import re   #Regular Expressions
-import KFS.convert_to_SI, KFS.fstr
+import re
+from KFSconvert_to_SI import KFSconvert_to_SI
+from KFSfstr          import KFSfstr
 from weather_minimums import WEATHER_MIN
 
 
@@ -42,9 +43,9 @@ def change_format_RVR(info: str) -> str|None:
             RVR_2=float(re_match.groupdict()["RVR_2"])
 
 
-        info_new=f"R{runway}/{KFS.fstr.notation_tech(RVR_1, 2)}m{plus_minus}"
+        info_new=f"R{runway}/{KFSfstr.notation_tech(RVR_1, 2)}m{plus_minus}"
         if RVR_1!=RVR_2:
-            info_new+=f"V{KFS.fstr.notation_tech(float(RVR_2), 2)}m"
+            info_new+=f"V{KFSfstr.notation_tech(float(RVR_2), 2)}m"
         info_new+=trend
 
         if "RVR" in WEATHER_MIN and (RVR_1<WEATHER_MIN["RVR"] or RVR_2<WEATHER_MIN["RVR"]): #if a RVR below RVR min.: mark
@@ -58,7 +59,7 @@ def change_format_RVR(info: str) -> str|None:
         info_new: str
         plus_minus: str=PLUS_MINUS[re_match.groupdict()["plus_minus"]]
         runway: str
-        RVR_1: float=float(re_match.groupdict()["RVR_1"])*KFS.convert_to_SI.length["ft"]
+        RVR_1: float=float(re_match.groupdict()["RVR_1"])*KFSconvert_to_SI.LENGTH["ft"]
         RVR_2: float    #RVR 2, if no given equal to RVR 1
         trend: str|None
 
@@ -68,7 +69,7 @@ def change_format_RVR(info: str) -> str|None:
         if re_match.groupdict()["RVR_2"]==None:
             RVR_2=RVR_1
         else:
-            RVR_2=float(re_match.groupdict()["RVR_2"])*KFS.convert_to_SI.length["ft"]
+            RVR_2=float(re_match.groupdict()["RVR_2"])*KFSconvert_to_SI.LENGTH["ft"]
 
         trend=re_match.groupdict()["trend"]
         if trend==None:
@@ -77,9 +78,9 @@ def change_format_RVR(info: str) -> str|None:
             trend=TREND[trend]
 
 
-        info_new=f"R{runway}/{KFS.fstr.notation_tech(RVR_1, 2)}m{plus_minus}"
+        info_new=f"R{runway}/{KFSfstr.notation_tech(RVR_1, 2)}m{plus_minus}"
         if RVR_1!=RVR_2:
-            info_new+=f"V{KFS.fstr.notation_tech(float(RVR_2), 2)}m"
+            info_new+=f"V{KFSfstr.notation_tech(float(RVR_2), 2)}m"
         info_new+=trend
 
         if "RVR" in WEATHER_MIN and (RVR_1<WEATHER_MIN["RVR"] or RVR_2<WEATHER_MIN["RVR"]): #if a RVR below RVR min.: mark
