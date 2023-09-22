@@ -1,5 +1,5 @@
-#Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
-import re   #Regular Expressions
+# Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
+import re
 
 
 def change_format_RSM(info: str) -> str|None:
@@ -60,7 +60,7 @@ def change_format_RSM(info: str) -> str|None:
         BRAKING[f"{b:02}"]=("GOOD",        False)
 
 
-    #runway state message
+    # runway state message
     re_match=re.search("^R(?P<runway>[0-3][0-9]([LCR])?)/(?P<deposit>[0-9]|/)(?P<extent>[0-9]|/)(?P<depth>[0-9][0-9]|//)(?P<braking>[0-9][0-9]|//)$", info)
     if re_match!=None:
         braking: str
@@ -74,7 +74,7 @@ def change_format_RSM(info: str) -> str|None:
         info_new: str
 
         runway=re_match.groupdict()["runway"]
-        if runway=="88":    #if runway 88: all runways
+        if runway=="88":    # if runway 88: all runways
             runway=":ALL"
         try:
             deposit, deposit_bold=DEPOSIT[re_match.groupdict()["deposit"]]
@@ -101,7 +101,7 @@ def change_format_RSM(info: str) -> str|None:
         return f"\n{info_new}"
 
 
-    #runway cleared
+    # runway cleared
     re_match=re.search("^R([0-3][0-9]|88)([LCR]|)/CLRD//$", info)
     if re_match!=None:
         info_new: str
@@ -117,6 +117,6 @@ def change_format_RSM(info: str) -> str|None:
         return f"\n{info_new}"
         
 
-    #aerodrome snow closed
+    # aerodrome snow closed
     if info=="R/SNOCLO":
         return f"\n**{info}**"

@@ -1,4 +1,4 @@
-#Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
+# Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import datetime as dt
 import pandas
 from change_format_.change               import change_format_change
@@ -20,62 +20,62 @@ from Station                             import Station
 
 
 def change_format(info_list: list[str], i: int, station: Station, met_report_DT: dt.datetime, now_DT: dt.datetime, RWY_DB: pandas.DataFrame, server: Server) -> str:
-    #just forward station ICAO
+    # just forward station ICAO
 
-    info_new=change_format_met_report_DT(info_list[i], met_report_DT, now_DT, server)  #met report time
+    info_new=change_format_met_report_DT(info_list[i], met_report_DT, now_DT, server)   # met report time
     if info_new!=None:
         return info_new
 
-    info_new=change_format_wind         (info_list[i], station, RWY_DB)                     #wind
+    info_new=change_format_wind         (info_list[i], station, RWY_DB)                 # wind
     if info_new!=None:
         return info_new
 
-    info_new=change_format_vis          (info_list, i)                                      #visibility
+    info_new=change_format_vis          (info_list, i)                                  # visibility
     if info_new!=None:
         return info_new
 
-    info_new=change_format_RVR          (info_list[i])                                      #RVR
+    info_new=change_format_RVR          (info_list[i])                                  # RVR
     if info_new!=None:
         return info_new
 
-    info_new=change_format_weather      (info_list, i)                                      #weather, only mark weather dangerous
+    info_new=change_format_weather      (info_list, i)                                  # weather, only mark weather dangerous
     if info_new!=None:
         return info_new
 
-    info_new=change_format_clouds       (info_list[i], station)                             #clouds
+    info_new=change_format_clouds       (info_list[i], station)                         # clouds
     if info_new!=None:
         return info_new
 
-    info_new=change_format_VV           (info_list[i])                                      #visibility vertical
+    info_new=change_format_VV           (info_list[i])                                  # visibility vertical
     if info_new!=None:
         return info_new
 
-    info_new=change_format_temp_dew     (info_list[i])                                      #temperature and dewpoint
+    info_new=change_format_temp_dew     (info_list[i])                                  # temperature and dewpoint
     if info_new!=None:
         return info_new
 
-    info_new=change_format_QNH          (info_list[i])                                      #QNH, altimeter setting
+    info_new=change_format_QNH          (info_list[i])                                  # QNH, altimeter setting
     if info_new!=None:
         return info_new
 
-    info_new=change_format_RSM          (info_list[i])                                      #runway state message
+    info_new=change_format_RSM          (info_list[i])                                  # runway state message
     if info_new!=None:
         return info_new
 
-    info_new=change_format_change       (info_list, i, met_report_DT)                       #trend and TAF: changes in weather
+    info_new=change_format_change       (info_list, i, met_report_DT)                   # trend and TAF: changes in weather
     if info_new!=None:
         return info_new
 
-    info_new=change_format_validity     (info_list[i], met_report_DT)                       #TAF: validity timespan
+    info_new=change_format_validity     (info_list[i], met_report_DT)                   # TAF: validity timespan
     if info_new!=None:
         return info_new
 
-    info_new=change_format_TXTN         (info_list[i], met_report_DT)                       #TAF: daily temperature max and min
+    info_new=change_format_TXTN         (info_list[i], met_report_DT)                   # TAF: daily temperature max and min
     if info_new!=None:
         return info_new
 
-    info_new=change_format_USA_codes    (info_list[i], met_report_DT, station, RWY_DB)      #USA weather station machine codes
+    info_new=change_format_USA_codes    (info_list[i], met_report_DT, station, RWY_DB)  # USA weather station machine codes
     if info_new!=None:
         return info_new
 
-    return f" {info_list[i]}"   #if format not found: just forward it
+    return f" {info_list[i]}"   # if format not found: just forward it
