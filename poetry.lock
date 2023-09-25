@@ -390,13 +390,13 @@ testing-libs = ["simplejson", "ujson"]
 
 [[package]]
 name = "kfsconfig"
-version = "1.0.0"
+version = "1.0.2"
 description = ""
 optional = false
 python-versions = ">=3.11.0,<4.0.0"
 files = [
-    {file = "kfsconfig-1.0.0-py3-none-any.whl", hash = "sha256:e6209f4292cd87b8f2966afb9e4558c21910329ad32c02dfca8146315f4e0c74"},
-    {file = "kfsconfig-1.0.0.tar.gz", hash = "sha256:9aa8d586c812260b2c61fc6e768f0308b9bde5d46b0b0e9bfefb64e0d7741695"},
+    {file = "kfsconfig-1.0.2-py3-none-any.whl", hash = "sha256:37d9c556b4016575cffb9e45bb08f018bdc4bc1bee962808c17313eeec82f140"},
+    {file = "kfsconfig-1.0.2.tar.gz", hash = "sha256:6c7e92f12bc1dddc4eb629ca0c2bef6c72832dfb1c4425baa5b4f336369ff6c2"},
 ]
 
 [package.dependencies]
@@ -404,24 +404,24 @@ KFSlog = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "kfsconvert-to-si"
-version = "1.0.0"
-description = ""
-optional = false
-python-versions = ">=3.11.0,<4.0.0"
-files = [
-    {file = "kfsconvert_to_si-1.0.0-py3-none-any.whl", hash = "sha256:dd4ba8a044924df065b5b077e028a352fbddf17a2742a408ac62d08e4fa0b5c2"},
-    {file = "kfsconvert_to_si-1.0.0.tar.gz", hash = "sha256:eca3400e73685e6129f21d91f5f910143d7d0957376b4e6de1040db83bba7be0"},
-]
-
-[[package]]
-name = "kfsfstr"
 version = "1.0.1"
 description = ""
 optional = false
 python-versions = ">=3.11.0,<4.0.0"
 files = [
-    {file = "kfsfstr-1.0.1-py3-none-any.whl", hash = "sha256:e98e88a4d3aa49c9618e6936fe55bc3e843cb98117a0ad03b574d2b213c12a1d"},
-    {file = "kfsfstr-1.0.1.tar.gz", hash = "sha256:b76fa6e5c23813a17d1cde4c7572b4960032da112b86d889c973e1eb1081dc2e"},
+    {file = "kfsconvert_to_si-1.0.1-py3-none-any.whl", hash = "sha256:3f82287f4d2ccb591080325b2405ac9fe5300f195a168cd5b26f978349986066"},
+    {file = "kfsconvert_to_si-1.0.1.tar.gz", hash = "sha256:32d32f0d3117e10dbf51db86f89e7eb587625b5a4721b28819bca6507a4cad8a"},
+]
+
+[[package]]
+name = "kfsfstr"
+version = "1.0.2"
+description = ""
+optional = false
+python-versions = ">=3.11.0,<4.0.0"
+files = [
+    {file = "kfsfstr-1.0.2-py3-none-any.whl", hash = "sha256:519b31e8e33de56ed1fdd2db092ce6d6a5a693218820de6286cf95bbe962ed09"},
+    {file = "kfsfstr-1.0.2.tar.gz", hash = "sha256:e50c31aafa82c4bfca322de9557e87453a8fe395b18ee4d3952437d522f3d923"},
 ]
 
 [package.dependencies]
@@ -430,13 +430,13 @@ KFSmath = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "kfslog"
-version = "1.0.0"
+version = "1.0.1"
 description = ""
 optional = false
 python-versions = ">=3.11.0,<4.0.0"
 files = [
-    {file = "kfslog-1.0.0-py3-none-any.whl", hash = "sha256:b936b2df732ad5b2fbce12d1a5e9f0ed59b40f4e4e032e659c3f049fb3dc465b"},
-    {file = "kfslog-1.0.0.tar.gz", hash = "sha256:3d4c3113c898d5e3ee8b24aedbca57f272c069551f2fbc0cd37dcc07534ac4a6"},
+    {file = "kfslog-1.0.1-py3-none-any.whl", hash = "sha256:e9c5b59282c453cc9b38c251220281fba28fb955c0e9fadf920bb29c30bd6cd9"},
+    {file = "kfslog-1.0.1.tar.gz", hash = "sha256:db1237d6704d09e7adc7ec798df01a281fcc5282bc3b81104d87b9607a42f03f"},
 ]
 
 [package.dependencies]
@@ -445,13 +445,13 @@ KFSfstr = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "kfsmath"
-version = "1.0.0"
+version = "1.0.1"
 description = ""
 optional = false
 python-versions = ">=3.11.0,<4.0.0"
 files = [
-    {file = "kfsmath-1.0.0-py3-none-any.whl", hash = "sha256:c24800b336fd6d51b5b5bac2dc5b57f731a0dc6d33428fdd6d2ef88313054302"},
-    {file = "kfsmath-1.0.0.tar.gz", hash = "sha256:1193376aaf451910816d0427fd9446e37f3470fec81b36ffa974f7e4a6261b47"},
+    {file = "kfsmath-1.0.1-py3-none-any.whl", hash = "sha256:c5cccef537e10293cd1ac6f0e952fb31e97f5d60d133e43a6a34a2f3122457e8"},
+    {file = "kfsmath-1.0.1.tar.gz", hash = "sha256:bd28030eeffcad0880ea7955ca7e4fb94f23496714a4f54a75867268eba25e55"},
 ]
 
 [[package]]
