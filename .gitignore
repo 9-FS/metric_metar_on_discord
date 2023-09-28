@@ -3,7 +3,11 @@
 *.log
 *.pyc
 *.token
-/doc_templates/
-/database/
-/log/
-/src/test.py
+
+.hypothesis/
+.pytest_cache/
+database/
+doc_templates/
+log/
+
+tests/test.py
