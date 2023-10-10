@@ -65,7 +65,7 @@ def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOA
         logging.info("Looking for old databases to remove from archive...")
         DB_filenames=[filename                                                          # load databases existing
                       for filename in sorted(os.listdir(os.path.dirname(DB_TODAY_FILEPATH)))
-                      if re.search(f"^[0-9]{4}-[0-1][0-9]-[0-3][0-9] {DB_type.name} DB.csv$", filename)!=None]
+                      if re.search(f"^([0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9] {DB_type.name} DB.csv)$", filename)!=None]
         for i in range(len(DB_filenames)-5):                                            # delete all databases saved except 5 most current
             DB_filepath=os.path.join(os.path.dirname(DB_TODAY_FILEPATH), DB_filenames[i])
             logging.info(f"Removing \"{DB_filepath}\"...")
@@ -79,7 +79,7 @@ def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOA
     logging.info(f"Loading {DB_type.name} database from archive...")
     DB_filenames=[filename  # load databases existing
                   for filename in sorted(os.listdir(os.path.dirname(DB_TODAY_FILEPATH)))
-                  if re.search(f"^[0-9]{4}-[0-1][0-9]-[0-3][0-9] {DB_type.name} DB.csv$", filename)!=None]
+                  if re.search(f"^([0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9] {DB_type.name} DB.csv)$", filename)!=None]
 
     for i in range(len(DB_filenames)-1, -1, -1):    # iterate archive from most recent to oldest
         DB_filepath=os.path.join(os.path.dirname(DB_TODAY_FILEPATH), DB_filenames[i])

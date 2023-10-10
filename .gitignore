@@ -1,5 +1,6 @@
 *.csv
 *.exe
+*.json
 *.log
 *.pyc
 *.token

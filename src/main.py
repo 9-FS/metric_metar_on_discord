@@ -25,8 +25,7 @@ from weather_minimums  import WEATHER_MIN
 # keep over runtime whole
 aerodrome_DB: pandas.DataFrame=pandas.DataFrame()   # aerodrome database
 country_DB: pandas.DataFrame  =pandas.DataFrame()   # country database for country names
-frequency_DB: pandas.DataFrame=pandas.DataFrame()   # frequency database for information command
-navaid_DB: pandas.DataFrame   =pandas.DataFrame()   # navaid database for information command
+# navaid_DB: pandas.DataFrame   =pandas.DataFrame()   # navaid database for information command
 RWY_DB: pandas.DataFrame      =pandas.DataFrame()   # runway database for cross wind components and information command
 servers: list[Server]                               # all variables for 1 server instance
 SERVERS_FILENAME: str="servers.json"                # save filename for all servers, so subscription is remembered beyond restarts
@@ -349,8 +348,7 @@ async def main() -> None:
         """
         global aerodrome_DB
         global country_DB
-        global frequency_DB
-        global navaid_DB
+        # global navaid_DB
         global RWY_DB
         global servers
 
@@ -359,8 +357,7 @@ async def main() -> None:
         now_DT=dt.datetime.now(dt.timezone.utc)
         aerodrome_DB=init_DB(DB_Type.aerodrome, aerodrome_DB, now_DT, DOWNLOAD_TIMEOUT)
         country_DB  =init_DB(DB_Type.country,   country_DB,   now_DT, DOWNLOAD_TIMEOUT)
-        frequency_DB=init_DB(DB_Type.frequency, frequency_DB, now_DT, DOWNLOAD_TIMEOUT)
-        navaid_DB   =init_DB(DB_Type.navaid,    navaid_DB,    now_DT, DOWNLOAD_TIMEOUT)
+        # navaid_DB   =init_DB(DB_Type.navaid,    navaid_DB,    now_DT, DOWNLOAD_TIMEOUT)
         RWY_DB      =init_DB(DB_Type.runway,    RWY_DB,       now_DT, DOWNLOAD_TIMEOUT)
         
 
