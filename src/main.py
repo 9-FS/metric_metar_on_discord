@@ -51,8 +51,11 @@ async def main() -> None:
     else:
         UPDATE_FREQUENCY: float=10e-3       # but usually update subscription with 10mHz (every 100s)
 
-    discord_bot_channel_names=[bot_channel_name for bot_channel_name in KFSconfig.load_config("./config/discord_bot_channel_names.txt", "bots\nbotspam\nmetar").split("\n") if bot_channel_name!=""]    # load bot channel names, remove empty lines
-    discord_bot_token=KFSconfig.load_config("./config/discord_bot.token")                                                                                                                               # load discord bot token
+    try:
+        discord_bot_channel_names=[bot_channel_name for bot_channel_name in KFSconfig.load_config("./config/discord_bot_channel_names.txt", "bots\nbotspam\nmetar").split("\n") if bot_channel_name!=""]    # load bot channel names, remove empty lines
+        discord_bot_token=KFSconfig.load_config("./config/discord_bot.token")                                                                                                                               # load discord bot token
+    except FileNotFoundError:
+        return
     intents=discord.Intents.default()                                                                                                                                                                   # standard permissions
     intents.message_content=True                                                                                                                                                                        # in addition with message contents
     discord_bot=discord.Client(intents=intents)                                                                                                                                                         # create client instance
