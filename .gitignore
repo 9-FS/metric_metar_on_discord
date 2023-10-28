@@ -1,6 +1,4 @@
-*.csv
 *.exe
-*.json
 *.log
 *.pyc
 *.token
@@ -11,4 +9,6 @@ database/
 doc_templates/
 log/
 
+Dockerfile
+servers.json
 tests/test.py
