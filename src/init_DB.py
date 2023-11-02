@@ -1,6 +1,7 @@
 # Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 import datetime as dt
 import io   # CSV string -> pandas.DataFrame
+from KFSfstr import KFSfstr
 import logging
 import os
 import pandas
@@ -42,8 +43,8 @@ def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOA
     try:                                                                                # download database
         DB=requests.get(DB_type.value, timeout=DOWNLOAD_TIMEOUT).text                   # type:ignore
         DB=pandas.read_csv(io.StringIO(DB))                                             # type:ignore
-    except requests.ConnectionError:
-        logging.warning(f"Downloading {DB_type.name} database failed with requests.ConnectionError.")
+    except requests.ConnectionError as e:
+        logging.warning(f"Downloading {DB_type.name} database failed with {KFSfstr.full_class_name(e)}.")
     except requests.ReadTimeout:
         logging.warning(f"Downloading {DB_type.name} database timed out after 10s.")
     except pandas.errors.EmptyDataError:
@@ -71,8 +72,8 @@ def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOA
             logging.info(f"Removing \"{DB_filepath}\"...")
             try:
                 os.remove(DB_filepath)
-            except OSError:
-                logging.warning(f"Removing \"{DB_filepath}\" failed with OSError.")
+            except OSError as e:
+                logging.warning(f"Removing \"{DB_filepath}\" failed with {KFSfstr.full_class_name(e)}.")
             logging.info(f"\rRemoved \"{DB_filepath}\".")
 
     # if database empty: downloading unsuccessful, load from archive
@@ -86,8 +87,8 @@ def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOA
         logging.info(f"Loading {DB_type.name} database from \"{DB_filepath}\"...")
         try:
             DB=pandas.read_csv(DB_filepath)
-        except OSError:
-            logging.warning(f"Loading {DB_type.name} database from \"{DB_filepath}\" failed with OSError.")
+        except OSError as e:
+            logging.warning(f"Loading {DB_type.name} database from \"{DB_filepath}\" failed with {KFSfstr.full_class_name(e)}.")
         else:                                       # loading successful
             logging.info(f"\rLoaded {DB_type.name} database from \"{DB_filepath}\".")
             return DB

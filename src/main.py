@@ -64,8 +64,8 @@ async def main() -> None:
     try:
         with open(SERVERS_FILENAME, "rt") as servers_file:  # try to restore server states
             servers=jsonpickle.decode(servers_file.read())  # type:ignore
-    except FileNotFoundError:                               # if file not created yet: no server states available yet
-        logging.warning(f"\rRestoring server states from \"{SERVERS_FILENAME}\" failed with FileNotFoundError.")
+    except FileNotFoundError as e:                          # if file not created yet: no server states available yet
+        logging.warning(f"\rRestoring server states from \"{SERVERS_FILENAME}\" failed with {KFSfstr.full_class_name(e)}.")
         servers=[]
     else:
         logging.info(f"\rRestored server states from \"{SERVERS_FILENAME}\".")
