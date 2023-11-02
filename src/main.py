@@ -325,14 +325,17 @@ async def main() -> None:
             
             try:
                 await discord_bot.get_channel(channel_id).send(message_send)    # send message to discord # type:ignore
-            except AttributeError:                                              # get_channel already returned None, bot has probably been removed from server
-                logging.error("Sending message to discord failed. Assuming bot has been removed from server.")
+            except AttributeError as e:                                          # get_channel already returned None, bot has probably been removed from server
+                logging.error(f"Sending message to discord failed with {KFSfstr.full_class_name(e)}. Assuming bot has been removed from server.")
                 logging.info(f"Deleting server {server.name} ({server.id}) from servers list...")
                 servers=[s for s in servers if s.id!=server.id]                 # delete from list
                 logging.info(f"\rDeleted server {server.name} ({server.id}) from servers list.")
                 return
-            except discord.errors.DiscordServerError:                           # send failed
-                logging.error("Sending message to discord failed.")
+            except discord.errors.Forbidden as e:                                # bot has no permission to send message
+                logging.error(f"Sending message to discord failed with {KFSfstr.full_class_name(e)}. Bot has no permission to send message.")
+                return
+            except discord.errors.DiscordServerError as e:                       # send failed
+                logging.error(f"Sending message to discord failed with {KFSfstr.full_class_name(e)}. Error message: {e.args}")
                 return
             if append_TAF==False:
                 logging.info("\rSent METAR and original METAR.")

@@ -32,7 +32,7 @@ This discord bot provides realtime meteorological aerodrome reports (METAR) and 
 METAR and TAF will be provided:
 
 - **primarily in a more readable or even completely decoded way in which all units are stated and converted to SI**. This custom standard strives to be a more modern and better compromise between being able to quickly brief the relevant information and enhancing its readability.  
-Important: While the code has been proven reliable over 1 year of daily private use, **it is not certified to be used in real flight operations.**
+Important: While the code has been proven reliable over years of daily private use, **it is not certified to be used in real flight operations.** Please [open an issue on Github](https://github.com/9-FS/2022-01-26-Metric-METAR-for-Discord/issues) if you find any bugs or have any suggestions.
 - secondarily in their original format which is directly forwarded from [NOAA](https://www.noaa.gov/)[^1], mainly for cross-checking
 
 Once a station is requested, 2 things happen:
@@ -132,7 +132,7 @@ This method is recommended if you just want to use the bot out of the box and se
 1. Make sure to have a text channel named `bots`, `botspam`, or `metar` on your server. **The bot will only react in these specific channels.**  
 
 If you need another channel name the bot reacts to, either contact me or follow the guideline in [chapter 3.](#3-how-to-install-by-setting-up-your-own-bot) to set up your own bot instance.  
-It is recommended to only have 1 of the beforementioned channels on your server.
+It is recommended to only have 1 of the beforementioned channels on your server, because I have not tested what happens if there are multiple.
 
 ## 3. How to Install by Setting Up Your Own Bot
 
@@ -163,8 +163,6 @@ Once set up, using the bot is dead-easy. Write one of the following commands int
 
 These are the features I am thinking about implementing in the future. Their stages vary widely from "hmm might be nice to have that" to "I have it almost done, but there is this 1 problem I can't solve.". So don't get your hopes up too high, but I'm very much open for feature requests and discussions.
 
-- aerodrome information command
-- download VFR charts command
 - switch from open source database https://ourairports.com/data/ to official database, currently no idea how to get free access
 - customisable weather minimums for each server
 

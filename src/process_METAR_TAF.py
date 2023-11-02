@@ -8,6 +8,7 @@ import requests
 from change_format     import change_format     # change information format
 from change_format_RMK import change_format_RMK # in remark section change information format
 from Doc_Type          import Doc_Type          # processing METAR or TAF?
+from KFSfstr           import KFSfstr
 from Server            import Server
 from Station           import Station
 
@@ -40,11 +41,8 @@ def process_METAR_TAF(doc_type: Doc_Type, station: Station, RWY_DB: pandas.DataF
     logging.info(f"Downloading {doc_type.name}...")
     try:
         METAR_TAF_o=requests.get(METAR_TAF_URL, timeout=DOWNLOAD_TIMEOUT)   # download METAR or TAF
-    except requests.ConnectTimeout:                                         # if unsuccessful: abort
-        logging.error(f"\rDownloading {doc_type.name} timed out after {DOWNLOAD_TIMEOUT}s.")
-        raise
-    except requests.ConnectionError:                                        # if unsuccessful: abort
-        logging.error(f"\rDownloading {doc_type.name} failed.")
+    except requests.ConnectionError as e:                                   # if unsuccessful: abort
+        logging.error(f"\rDownloading {doc_type.name} failed with {KFSfstr.full_class_name(e)}. Error message: {e.args}")
         raise
     else:
         logging.info(f"\rDownloaded {doc_type.name}.")

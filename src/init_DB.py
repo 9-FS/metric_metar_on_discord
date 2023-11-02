@@ -31,8 +31,8 @@ def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOA
         logging.warning(f"Loading {DB_type.name} database failed, because \"{DB_TODAY_FILEPATH}\" does not exist.")
     except pandas.errors.EmptyDataError:
         logging.warning(f"Loaded {DB_type.name} database, but it is empty.")
-    except pandas.errors.ParserError:
-        logging.warning(f"Loaded {DB_type.name} database, but parsing failed.")
+    except pandas.errors.ParserError as e:
+        logging.warning(f"Loaded {DB_type.name} database, but parsing failed with {KFSfstr.full_class_name(e)}. Error message: {e.args}")
     else:   # if loading database successful:
         logging.info(f"\rLoaded {DB_type.name} database from \"{DB_TODAY_FILEPATH}\".")
         return DB
@@ -44,21 +44,21 @@ def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOA
         DB=requests.get(DB_type.value, timeout=DOWNLOAD_TIMEOUT).text                   # type:ignore
         DB=pandas.read_csv(io.StringIO(DB))                                             # type:ignore
     except requests.ConnectionError as e:
-        logging.warning(f"Downloading {DB_type.name} database failed with {KFSfstr.full_class_name(e)}.")
+        logging.warning(f"Downloading {DB_type.name} database failed with {KFSfstr.full_class_name(e)}. Error message: {e.args}")
     except requests.ReadTimeout:
         logging.warning(f"Downloading {DB_type.name} database timed out after 10s.")
     except pandas.errors.EmptyDataError:
         logging.warning(f"Downloaded {DB_type.name} database is empty.")
-    except pandas.errors.ParserError:
-        logging.warning(f"Downloaded {DB_type.name} database, but parsing failed.")
+    except pandas.errors.ParserError as e:
+        logging.warning(f"Downloaded {DB_type.name} database, but parsing failed with {KFSfstr.full_class_name(e)}. Error message: {e.args}")
     else:                                                                               # downloading successful, save
         logging.info(f"\rDownloaded and formatted {DB_type.name} database.")
 
         logging.info(f"Saving {DB_type.name} database in \"{DB_TODAY_FILEPATH}\"...")   # save downloaded database
         try:                                                                            # save database
             DB.to_csv(DB_TODAY_FILEPATH, index=False, mode="wt")
-        except OSError:
-            logging.warning(f"Saving {DB_type.name} database in \"{DB_TODAY_FILEPATH}\" failed.")
+        except OSError as e:
+            logging.warning(f"Saving {DB_type.name} database in \"{DB_TODAY_FILEPATH}\" failed with {KFSfstr.full_class_name(e)}. Error message: {e.args}")
         else:
             logging.info(f"\rSaved {DB_type.name} database in \"{DB_TODAY_FILEPATH}\".")
         return DB
@@ -73,7 +73,7 @@ def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOA
             try:
                 os.remove(DB_filepath)
             except OSError as e:
-                logging.warning(f"Removing \"{DB_filepath}\" failed with {KFSfstr.full_class_name(e)}.")
+                logging.warning(f"Removing \"{DB_filepath}\" failed with {KFSfstr.full_class_name(e)}. Error message: {e.args}")
             logging.info(f"\rRemoved \"{DB_filepath}\".")
 
     # if database empty: downloading unsuccessful, load from archive
@@ -88,7 +88,7 @@ def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOA
         try:
             DB=pandas.read_csv(DB_filepath)
         except OSError as e:
-            logging.warning(f"Loading {DB_type.name} database from \"{DB_filepath}\" failed with {KFSfstr.full_class_name(e)}.")
+            logging.warning(f"Loading {DB_type.name} database from \"{DB_filepath}\" failed with {KFSfstr.full_class_name(e)}. Error message: {e.args}")
         else:                                       # loading successful
             logging.info(f"\rLoaded {DB_type.name} database from \"{DB_filepath}\".")
             return DB
