@@ -28,7 +28,7 @@ country_DB: pandas.DataFrame  =pandas.DataFrame()   # country database for count
 # navaid_DB: pandas.DataFrame   =pandas.DataFrame()   # navaid database for information command
 RWY_DB: pandas.DataFrame      =pandas.DataFrame()   # runway database for cross wind components and information command
 servers: list[Server]                               # all variables for 1 server instance
-SERVERS_FILENAME: str="servers.json"                # save filename for all servers, so subscription is remembered beyond restarts
+SERVERS_FILENAME: str="./config/servers.json"       # save filename for all servers, so subscription is remembered beyond restarts
 
 
 @KFSlog.timeit_async
