@@ -32,7 +32,7 @@ SERVERS_FILENAME: str="./config/servers.json"       # save filename for all serv
 
 
 @KFSlog.timeit_async
-async def main() -> None:
+async def main(DEBUG: bool) -> None:
     global servers
     
     # keep over runtime whole, but read-only in sub-functions
