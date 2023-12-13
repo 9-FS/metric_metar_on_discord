@@ -5,6 +5,7 @@
 
 .hypothesis/
 .pytest_cache/
+config/
 database/
 doc_templates/
 log/
