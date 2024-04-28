@@ -10,6 +10,4 @@ database/
 doc_templates/
 log/
 
-Dockerfile
-servers.json
 tests/test.py
