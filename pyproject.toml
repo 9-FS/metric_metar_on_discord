@@ -1,11 +1,12 @@
 [tool.poetry]
-authors     = ["9FS <pray4spam@googlemail.com>"]
-description = ""
-license     = "CC BY-NC-SA 4.0"
-name        = "x"                                                           # can't leave empty because of bug with `poetry install` from poetry.lock file
-readme      = "readme.md"
-repository  = "https://github.com/9-FS/2022-01-26-Metric-METAR-for-Discord"
-version     = "1.1.5"
+authors      = ["9FS <pray4spam@googlemail.com>"]
+description  = ""
+license      = "CC BY-NC-SA 4.0"
+name         = ""
+package-mode = false                                                         # this is an application, not library
+readme       = "readme.md"
+repository   = "https://github.com/9-FS/2022-01-26-Metric-METAR-for-Discord"
+version      = "1.1.5"
 
 [tool.poetry.dependencies]
 discord          = "^2.3.2"
