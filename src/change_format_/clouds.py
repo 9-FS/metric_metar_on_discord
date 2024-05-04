@@ -1,4 +1,4 @@
-# Copyright (c) 2023 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
+# Copyright (c) 2024 구FS, all rights reserved. Subject to the CC BY-NC-SA 4.0 licence in `licence.md`.
 from KFSconvert_to_SI import KFSconvert_to_SI
 from KFSfstr          import KFSfstr
 import re
