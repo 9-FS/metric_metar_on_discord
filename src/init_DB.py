@@ -10,7 +10,7 @@ import requests
 from DB_Type import DB_Type
 
 
-def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOAD_TIMEOUT: int) -> pandas.DataFrame:
+def init_DB(DB_type: DB_Type, DB: pandas.DataFrame, now_DT: dt.datetime, DOWNLOAD_TIMEOUT: float) -> pandas.DataFrame:
     DB_filenames: list[str]                                                                     # databases existing filenames
     DB_filepath: str                                                                            # filepath to database, date can be in past
     DB_TODAY_FILEPATH: str=f"./database/{now_DT.strftime('%Y-%m-%d')} {DB_type.name} DB.csv"    # filepath to database

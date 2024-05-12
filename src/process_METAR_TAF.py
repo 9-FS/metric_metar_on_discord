@@ -13,7 +13,7 @@ from Server            import Server
 from Station           import Station
 
 
-def process_METAR_TAF(doc_type: Doc_Type, station: Station, RWY_DB: pandas.DataFrame, now_DT: dt.datetime, server: Server, DOWNLOAD_TIMEOUT: int) -> tuple[str|None, str|None]:
+def process_METAR_TAF(doc_type: Doc_Type, station: Station, RWY_DB: pandas.DataFrame, now_DT: dt.datetime, server: Server, DOWNLOAD_TIMEOUT: float) -> tuple[str|None, str|None]:
     """
     Processes whole METAR or TAF, from downloading, cleaning up, looking whether it is expired or not, changing format, to returning in both original format and my format.
     """

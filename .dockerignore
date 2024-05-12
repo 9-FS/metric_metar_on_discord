@@ -10,5 +10,6 @@ database/
 doc_templates/
 log/
 
+.env
 docker-image.tar
 tests/test.py

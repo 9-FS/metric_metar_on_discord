@@ -6,22 +6,22 @@ name         = ""
 package-mode = false                                                         # this is an application, not library
 readme       = "readme.md"
 repository   = "https://github.com/9-FS/2022-01-26-Metric-METAR-for-Discord"
-version      = "1.1.5"
+version      = "1.2.0"
 
 [tool.poetry.dependencies]
-discord          = "^2.3.2"
-jsonpickle       = "^3.0.2"
-kfsconfig        = "^1.0.0"
+discord          = "^2.3.0"
+jsonpickle       = "^3.0.0"
+kfsconfig        = "^2.0.0"
 kfsconvert-to-si = "^1.0.0"
 kfsfstr          = "^1.0.0"
-kfslog           = "^1.0.0"
-pandas           = "^2.1.0"
-python           = "^3.11.0"
+kfslog           = "^2.0.0"
+pandas           = "^2.2.0"
+python           = "^3.12.0"
 requests         = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
-hypothesis = "^6.87.0"
-pytest     = "^7.4.2"
+hypothesis = "^6.0.0"
+pytest     = "^8.0.0"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
