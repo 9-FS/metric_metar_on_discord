@@ -3,9 +3,9 @@ authors      = ["9FS <pray4spam@googlemail.com>"]
 description  = ""
 license      = "CC BY-NC-SA 4.0"
 name         = ""
-package-mode = false                                                         # this is an application, not library
-readme       = "readme.md"
-repository   = "https://github.com/9-FS/2022-01-26-Metric-METAR-for-Discord"
+package-mode = false                                             # this is an application, not library
+readme       = "readme.typ"
+repository   = "https://github.com/9-FS/metric_metar_on_discord"
 version      = "1.2.0"
 
 [tool.poetry.dependencies]
