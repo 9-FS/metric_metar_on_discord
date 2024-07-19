@@ -1,17 +1,18 @@
 #import "@preview/wrap-it:0.1.0": wrap-content  // https://github.com/ntjess/wrap-it/blob/main/docs/manual.pdf
-#import "./doc_templates/src/style.typ": set_style
 #import "./doc_templates/src/note.typ": *
+#import "./doc_templates/src/style.typ": set_style
 
 
 #show: doc => set_style(
-    topic: "Metric METAR for Discord",
+    topic: "metric_metar_on_discord",
     author: "구FS",
     language: "EN",
     doc
 )
+#set text(size: 3.5mm)
 
 
-#align(center, text(size: 8mm, weight: "bold")[Metric METAR for Discord])
+#align(center, text(size: 2em, weight: "bold")[metric_metar_on_discord])
 #line(length: 100%, stroke: 0.3mm)
 \
 \
@@ -42,10 +43,10 @@ Once a station is requested, 2 things happen:
 = Examples
 == METAR
 
-```
+```METAR
 EDDL 311120Z AUTO 23018KT 9999 -SHRA FEW029 FEW///TCU 12/08 Q0995 RESHRA TEMPO 23020G30KT
 ```
-```
+```METAR
 EDDL 2023-03-31T11:20 AUTO 230°09m/s 10km+ -SHRA FEW930m|880m FEW///TCU 12°C/08°C Q099,5kPa RESHRA
 TEMPO 230°10G15m/s
 ```
@@ -57,7 +58,7 @@ Note the following differences:
 
 == TAF
 
-```
+```TAF
 TAF EDDL 311100Z 3112/0118 22015G25KT 9999 BKN030 PROB30
 TEMPO 3112/3113 24020G35KT SHRA BKN030TCU
 TEMPO 3113/0103 RA PROB40
@@ -67,7 +68,7 @@ TEMPO 0103/0118 4000 RADZ BKN007
 BECMG 0106/0109 28010KT
 ```
 
-```
+```TAF
 TAF EDDL 2023-03-31T11:00 31T12/04-01T18 220°08G13m/s 10km+ BKN960m|910m
 PROB0,3 TEMPO 31T12/13 240°10G18m/s SHRA BKN960m|910m|TCU
 TEMPO 31T13/04-01T03 RA
@@ -83,10 +84,10 @@ Note the following differences:
 
 == USA
 
-```
+```METAR
 KPHX 051151Z 12006KT 10SM FEW240 08/M08 A3010 RMK AO2 SLP186 T00831078 10133 20083 53005
 ```
-```
+```METAR
 KPHX 2023-04-05T11:51 (420s ago) 120°03m/s 16km FEW7.700m|7.300m 08°C/-08°C A101,9kPa
 RMK AO2 SLP101,86kPa 08,3°C/-07,8°C TX6h/13,3°C TN6h/08,3°C ΔPRES3h/+50Pa
 ```
@@ -99,10 +100,10 @@ Note the following differences:
 
 == Russia
 
-```
+```METAR
 UEEE 051230Z 30005MPS 9999 SCT030CB M15/M22 Q1009 R23L/490139 NOSIG RMK QFE748
 ```
-```
+```METAR
 UEEE 2023-04-05T12:30 (1,5ks ago) 300°05m/s 10km+ **SCT1.000m|910m|CB** -15°C/-22°C Q100,9kPa
 **R23L/SNOW:DRY/0,51~1/1mm/MEDIUM~GOOD**
 NOSIG
